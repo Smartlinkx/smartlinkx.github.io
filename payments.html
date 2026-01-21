@@ -45,23 +45,35 @@
             </div>
           </div>
 
-          <div class="grid two" style="margin-top:12px;">
-            <div class="field">
-              <label>Name</label>
-              <input type="text" name="name" placeholder="Subscriber name" required />
-            </div>
-            <div class="field">
-              <label>Payment Type</label>
-              <select name="paymentType" required>
-                <option value="">Select</option>
-                <option>Cash</option>
-                <option>GCash</option>
-                <option>Maya</option>
-                <option>Bank Transfer</option>
-                <option>Other</option>
-              </select>
-            </div>
-          </div>
+         <div class="grid two" style="margin-top:12px;">
+  <div class="field">
+    <label>Subscriber ID</label>
+    <input type="text" name="subscriberId" placeholder="e.g. SLX-0001" required />
+  </div>
+  <div class="field">
+    <label>Name</label>
+    <input type="text" name="name" placeholder="Subscriber name" required />
+  </div>
+</div>
+
+<div class="grid two" style="margin-top:12px;">
+  <div class="field">
+    <label>Payment Type</label>
+    <select name="paymentType" required>
+      <option value="">Select</option>
+      <option>Cash</option>
+      <option>GCash</option>
+      <option>Maya</option>
+      <option>Bank Transfer</option>
+      <option>Other</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Reference (optional)</label>
+    <input type="text" name="reference" placeholder="GCash/Maya Ref No. / OR No." />
+  </div>
+</div>
+
 
           <div class="field" style="margin-top:12px;">
             <label>Reference (optional)</label>
