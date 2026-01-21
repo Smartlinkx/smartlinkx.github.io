@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Payments - SMARTLINKX</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div>
+          <div class="brand-name">SMARTLINKX</div>
+          <div class="brand-tag">Payments</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="register.html">New Subscriber</a>
+        <a href="masterfile.html">Masterfile</a>
+        <a href="billing.html">Billing</a>
+        <a href="payments.html" class="active">Payments</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <h1>Payment Form</h1>
+      <p class="muted">All payments submitted here will be saved to your Google Sheet tab <b>PAYMENTS</b>.</p>
+
+      <div class="card">
+        <form id="paymentForm">
+          <div class="grid two">
+            <div class="field">
+              <label>Date</label>
+              <input type="date" id="payDate" name="date" required />
+            </div>
+            <div class="field">
+              <label>Amount</label>
+              <input type="number" name="amount" min="0" step="1" required />
+            </div>
+          </div>
+
+          <div class="grid two" style="margin-top:12px;">
+            <div class="field">
+              <label>Name</label>
+              <input type="text" name="name" placeholder="Subscriber name" required />
+            </div>
+            <div class="field">
+              <label>Payment Type</label>
+              <select name="paymentType" required>
+                <option value="">Select</option>
+                <option>Cash</option>
+                <option>GCash</option>
+                <option>Maya</option>
+                <option>Bank Transfer</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:12px;">
+            <label>Reference (optional)</label>
+            <input type="text" name="reference" placeholder="GCash/Maya Ref No. / OR No." />
+          </div>
+
+          <div class="field" style="margin-top:12px;">
+            <label>Admin Key</label>
+            <input type="password" id="payAdminKey" placeholder="Enter Admin Key" required />
+          </div>
+
+          <div class="field" style="margin-top:12px;">
+            <div class="alert" id="payStatus" style="display:none;"></div>
+          </div>
+
+          <button class="btn primary" id="paySubmitBtn" type="submit">Save Payment</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div>© <span id="year"></span> SMARTLINKX</div>
+    </div>
+  </footer>
+
+  <script src="app.js?v=4"></script>
+  <script>
+    function todayISO(){
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    function setStatus(el, msg, type){
+      el.style.display = "block";
+      el.className = "alert " + (type || "");
+      el.textContent = msg;
+    }
+
+    const form = document.getElementById("paymentForm");
+    const statusBox = document.getElementById("payStatus");
+    const submitBtn = document.getElementById("paySubmitBtn");
+    const adminKeyEl = document.getElementById("payAdminKey");
+    document.getElementById("payDate").value = todayISO();
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!API_URL) {
+        setStatus(statusBox, "ERROR: API_URL missing in app.js", "bad");
+        return;
+      }
+
+      const key = adminKeyEl.value.trim();
+      if (!key) {
+        setStatus(statusBox, "Please enter Admin Key.", "bad");
+        return;
+      }
+
+      const fd = new FormData(form);
+      const payload = Object.fromEntries(fd.entries());
+      payload.action = "payment";
+      payload.key = key;
+      payload.amount = Number(payload.amount || 0);
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving...";
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
+
+        setStatus(statusBox, "Saved! Payment recorded.", "ok");
+        form.reset();
+        document.getElementById("payDate").value = todayISO();
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Save Payment";
+      } catch (err) {
+        setStatus(statusBox, "Failed: " + err.message, "bad");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Save Payment";
+      }
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
