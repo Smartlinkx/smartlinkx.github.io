@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>New Subscriber Registration - SMARTLINKX</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div>
+          <div class="brand-name">SMARTLINKX</div>
+          <div class="brand-tag">New Subscriber Registration</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="register.html" class="active">New Subscriber</a>
+        <a href="masterfile.html">Masterfile</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <h1>New Subscriber Registration</h1>
+      <p class="muted">Fill in the subscriber details. Date is set to today but can be changed.</p>
+
+      <div class="card">
+        <form id="registrationForm" class="form-grid">
+          <div class="field">
+            <label>Date</label>
+            <input type="date" name="date" id="date" required />
+          </div>
+
+          <div class="field">
+            <label>Subscriber ID</label>
+            <input type="text" name="subscriberId" placeholder="e.g. SLX-0001" required />
+          </div>
+
+          <div class="field">
+            <label>Plan</label>
+            <select name="plan" id="planSelect" required></select>
+          </div>
+
+          <div class="field">
+            <label>Name</label>
+            <input type="text" name="name" placeholder="Subscriber full name" required />
+          </div>
+
+          <div class="field">
+            <label>Contact No.</label>
+            <input type="text" name="contactNo" placeholder="09xx..." required />
+          </div>
+
+          <div class="field full">
+            <label>Address</label>
+            <input type="text" name="address" placeholder="Complete address" required />
+          </div>
+
+          <div class="field">
+            <label>Installation Fee (₱)</label>
+            <input type="number" name="installationFee" id="installationFee" required />
+          </div>
+
+          <div class="field">
+            <label>Monthly Payment (₱)</label>
+            <input type="number" name="monthlyPayment" id="monthlyPayment" required />
+          </div>
+
+          <div class="field">
+            <label>MAC Address</label>
+            <input type="text" name="macAddress" placeholder="Optional" />
+          </div>
+
+          <div class="field">
+            <label>IP Address</label>
+            <input type="text" name="ipAddress" placeholder="Optional" />
+          </div>
+
+          <div class="field full">
+            <button class="btn primary" type="submit" id="submitBtn">Submit Registration</button>
+          </div>
+
+          <div class="field full">
+            <div class="alert" id="statusBox" style="display:none;"></div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card info">
+        <h3>Default Pricing</h3>
+        <ul class="clean">
+          <li>Installation Fee: <b>₱2,000</b></li>
+          <li>Plans: <b>20Mbps ₱699</b>, <b>100Mbps ₱1299</b> (you can add more)</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div>© <span id="year"></span> SMARTLINKX</div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
