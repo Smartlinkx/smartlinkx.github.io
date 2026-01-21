@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Billing - SMARTLINKX</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div>
+          <div class="brand-name">SMARTLINKX</div>
+          <div class="brand-tag">Billing by Due Date</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="register.html">New Subscriber</a>
+        <a href="masterfile.html">Masterfile</a>
+        <a href="billing.html" class="active">Billing</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <h1>Billing</h1>
+      <p class="muted">Loads Overdue, Due Today, and Due Soon subscribers (default next 7 days).</p>
+
+      <div class="card">
+        <div class="grid two">
+          <div class="field">
+            <label>Admin Key</label>
+            <input type="password" id="billAdminKey" placeholder="Paste your Admin Key" />
+          </div>
+          <div class="field">
+            <label>Due Soon Window (days)</label>
+            <input type="number" id="daysAhead" value="7" min="1" max="60" />
+          </div>
+        </div>
+
+        <div class="grid two" style="margin-top:12px;">
+          <div class="field">
+            <label>Search</label>
+            <input type="text" id="billSearch" placeholder="Search name / ID / plan / contact..." />
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button class="btn primary" id="loadBillingBtn">Load Billing</button>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top: 12px;">
+          <div class="alert" id="billStatus" style="display:none;"></div>
+        </div>
+
+        <div class="grid two" style="margin-top: 12px;">
+          <div class="card">
+            <h3>Overdue</h3>
+            <p class="muted small" id="overdueSummary">0 subscriber(s)</p>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Due Date</th><th>Subscriber ID</th><th>Name</th><th>Plan</th><th>Monthly</th><th>Contact</th>
+                  </tr>
+                </thead>
+                <tbody id="overdueBody">
+                  <tr><td colspan="6" class="muted">No data loaded yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Due Today</h3>
+            <p class="muted small" id="todaySummary">0 subscriber(s)</p>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Due Date</th><th>Subscriber ID</th><th>Name</th><th>Plan</th><th>Monthly</th><th>Contact</th>
+                  </tr>
+                </thead>
+                <tbody id="todayBody">
+                  <tr><td colspan="6" class="muted">No data loaded yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3>Due Soon</h3>
+          <p class="muted small" id="soonSummary">0 subscriber(s)</p>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Due Date</th><th>Subscriber ID</th><th>Name</th><th>Plan</th><th>Monthly</th><th>Contact</th>
+                </tr>
+              </thead>
+              <tbody id="soonBody">
+                <tr><td colspan="6" class="muted">No data loaded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div>© <span id="year"></span> SMARTLINKX</div>
+    </div>
+  </footer>
+
+  <script src="app.js?v=3"></script>
+  <script>
+    // Billing page logic (uses API_URL from app.js)
+    const btn = document.getElementById("loadBillingBtn");
+    const keyEl = document.getElementById("billAdminKey");
+    const daysEl = document.getElementById("daysAhead");
+    const status = document.getElementById("billStatus");
+    const searchEl = document.getElementById("billSearch");
+
+    const overdueBody = document.getElementById("overdueBody");
+    const todayBody = document.getElementById("todayBody");
+    const soonBody = document.getElementById("soonBody");
+
+    const overdueSummary = document.getElementById("overdueSummary");
+    const todaySummary = document.getElementById("todaySummary");
+    const soonSummary = document.getElementById("soonSummary");
+
+    let data = { overdue: [], dueToday: [], dueSoon: [] };
+
+    function setStatus(msg, type){
+      status.style.display = "block";
+      status.className = "alert " + (type || "");
+      status.textContent = msg;
+    }
+
+    function rowMatch(r, q){
+      const t = [
+        r["Due Date"], r["Subscriber ID"], r["Name"], r["Plan"], r["Contact No"], r["Monthly Payment"]
+      ].join(" ").toLowerCase();
+      return t.includes(q);
+    }
+
+    function renderTable(tbody, rows){
+      tbody.innerHTML = "";
+      if (!rows.length){
+        tbody.innerHTML = `<tr><td colspan="6" class="muted">No records.</td></tr>`;
+        return;
+      }
+      rows.forEach(r=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r["Due Date"] ?? ""}</td>
+          <td>${r["Subscriber ID"] ?? ""}</td>
+          <td>${r["Name"] ?? ""}</td>
+          <td>${r["Plan"] ?? ""}</td>
+          <td>${r["Monthly Payment"] ?? ""}</td>
+          <td>${r["Contact No"] ?? ""}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function applySearch(){
+      const q = (searchEl.value || "").trim().toLowerCase();
+      const overdue = q ? data.overdue.filter(r=>rowMatch(r,q)) : data.overdue;
+      const today = q ? data.dueToday.filter(r=>rowMatch(r,q)) : data.dueToday;
+      const soon = q ? data.dueSoon.filter(r=>rowMatch(r,q)) : data.dueSoon;
+
+      overdueSummary.textContent = `${overdue.length} subscriber(s)`;
+      todaySummary.textContent = `${today.length} subscriber(s)`;
+      soonSummary.textContent = `${soon.length} subscriber(s)`;
+
+      renderTable(overdueBody, overdue);
+      renderTable(todayBody, today);
+      renderTable(soonBody, soon);
+    }
+
+    searchEl.addEventListener("input", applySearch);
+
+    btn.addEventListener("click", async ()=>{
+      if (!window.API_URL && typeof API_URL === "undefined") {
+        setStatus("ERROR: API_URL not found. Check app.js.", "bad");
+        return;
+      }
+
+      const api = (typeof API_URL !== "undefined") ? API_URL : window.API_URL;
+      const key = keyEl.value.trim();
+      const days = Number(daysEl.value || 7);
+
+      if (!key) { setStatus("Please enter your Admin Key.", "bad"); return; }
+
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+
+      try{
+        const url = `${api}?action=billing&key=${encodeURIComponent(key)}&days=${encodeURIComponent(days)}`;
+        const res = await fetch(url);
+        const json = await res.json().catch(()=> ({}));
+
+        if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
+
+        data = {
+          overdue: json.overdue || [],
+          dueToday: json.dueToday || [],
+          dueSoon: json.dueSoon || []
+        };
+
+        setStatus(`Billing loaded. Overdue: ${data.overdue.length}, Due Today: ${data.dueToday.length}, Due Soon: ${data.dueSoon.length}`, "ok");
+        applySearch();
+
+        btn.textContent = "Load Billing";
+        btn.disabled = false;
+      } catch(err){
+        setStatus("Failed: " + err.message, "bad");
+        btn.textContent = "Load Billing";
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
