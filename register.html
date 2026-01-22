@@ -30,10 +30,11 @@
   <main class="section">
     <div class="container">
       <h1>New Subscriber Registration</h1>
-      <p class="muted">Fill in the subscriber details. Date is set to today but can be changed.</p>
+      <p class="muted">Subscriber ID is generated automatically to avoid duplicates.</p>
 
       <div class="card">
         <form id="registrationForm" class="form-grid">
+
           <div class="field">
             <label>Date</label>
             <input type="date" name="date" id="date" required />
@@ -41,7 +42,8 @@
 
           <div class="field">
             <label>Subscriber ID</label>
-            <input type="text" name="subscriberId" placeholder="e.g. SLX-0001" required />
+            <input type="text" name="subscriberId" id="subscriberId" readonly />
+            <small class="muted">Auto-generated</small>
           </div>
 
           <div class="field">
@@ -85,7 +87,9 @@
           </div>
 
           <div class="field full">
-            <button class="btn primary" type="submit" id="submitBtn">Submit Registration</button>
+            <button class="btn primary" type="submit" id="submitBtn">
+              Submit Registration
+            </button>
           </div>
 
           <div class="field full">
@@ -98,7 +102,7 @@
         <h3>Default Pricing</h3>
         <ul class="clean">
           <li>Installation Fee: <b>₱2,000</b></li>
-          <li>Plans: <b>20Mbps ₱699</b>, <b>100Mbps ₱1299</b> (you can add more)</li>
+          <li>Plans: <b>20Mbps ₱699</b>, <b>100Mbps ₱1299</b></li>
         </ul>
       </div>
     </div>
@@ -111,5 +115,58 @@
   </footer>
 
   <script src="app.js"></script>
+  <script>
+    // ===============================
+    // Helpers
+    // ===============================
+    function todayISO(){
+      const d = new Date();
+      return d.toISOString().slice(0,10);
+    }
+
+    function setStatus(el, msg, type){
+      el.style.display = "block";
+      el.className = "alert " + (type || "");
+      el.textContent = msg;
+    }
+
+    // ===============================
+    // Init defaults
+    // ===============================
+    const dateInput = document.getElementById("date");
+    const idInput = document.getElementById("subscriberId");
+    const statusBox = document.getElementById("statusBox");
+    dateInput.value = todayISO();
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // ===============================
+    // AUTO-GENERATE SUBSCRIBER ID
+    // ===============================
+    async function loadNextSubscriberId(){
+      try {
+        if (!API_URL) return;
+
+        // Admin key is stored in app.js (same as other pages)
+        const adminKey = window.ADMIN_KEY || "";
+
+        const res = await fetch(
+          `${API_URL}?action=nextid&key=${encodeURIComponent(adminKey)}`
+        );
+        const json = await res.json();
+
+        if (json.ok && json.nextId) {
+          idInput.value = json.nextId;
+        } else {
+          setStatus(statusBox, "Failed to generate Subscriber ID.", "bad");
+        }
+      } catch (err) {
+        setStatus(statusBox, "Error loading Subscriber ID.", "bad");
+      }
+    }
+
+    // Load ID on page open
+    loadNextSubscriberId();
+  </script>
 </body>
 </html>
