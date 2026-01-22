@@ -144,15 +144,15 @@
     // AUTO-GENERATE SUBSCRIBER ID
     // ===============================
     async function loadNextSubscriberId(){
-      try {
-        if (!API_URL) return;
+  try {
+    if (!API_URL) return;
 
-        // Admin key is stored in app.js (same as other pages)
-        const adminKey = window.ADMIN_KEY || "";
+    const adminKey = "SMARTLINKX_ISP_04082025"; // SAME as Apps Script
 
-        const res = await fetch(
-          `${API_URL}?action=nextid&key=${encodeURIComponent(adminKey)}`
-        );
+    const res = await fetch(
+      `${API_URL}?action=nextid&key=${encodeURIComponent(adminKey)}`
+    );
+
         const json = await res.json();
 
         if (json.ok && json.nextId) {
