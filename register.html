@@ -115,13 +115,30 @@
   </footer>
 
   <script src="app.js"></script>
+
   <script>
+    // ===============================
+    // CONFIG (set these once)
+    // ===============================
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyX-2aiopFR0EIcjLhW9Q2OQ-3BJ-zwSJshRgTcOrC_E1WbA0yxOTt2jzs5o67u6DBOLQ/exec";
+    const ADMIN_KEY = "SMARTLINKX_ISP_04082025";
+
+    // Plans (must match your backend expectations)
+    const PLANS = [
+      { name: "20Mbps", monthly: 699 },
+      { name: "100Mbps", monthly: 1299 }
+    ];
+    const DEFAULT_INSTALL_FEE = 2000;
+
     // ===============================
     // Helpers
     // ===============================
     function todayISO(){
       const d = new Date();
-      return d.toISOString().slice(0,10);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${yyyy}-${mm}-${dd}`;
     }
 
     function setStatus(el, msg, type){
@@ -131,43 +148,120 @@
     }
 
     // ===============================
-    // Init defaults
+    // Init UI
     // ===============================
+    const form = document.getElementById("registrationForm");
     const dateInput = document.getElementById("date");
     const idInput = document.getElementById("subscriberId");
+    const planSelect = document.getElementById("planSelect");
+    const installInput = document.getElementById("installationFee");
+    const monthlyInput = document.getElementById("monthlyPayment");
     const statusBox = document.getElementById("statusBox");
+    const submitBtn = document.getElementById("submitBtn");
+
     dateInput.value = todayISO();
+    installInput.value = DEFAULT_INSTALL_FEE;
 
     document.getElementById("year").textContent = new Date().getFullYear();
 
+    // Fill plan dropdown
+    planSelect.innerHTML = `<option value="" disabled selected>Select a plan</option>` +
+      PLANS.map(p => `<option value="${p.name}" data-monthly="${p.monthly}">${p.name} - ₱${p.monthly}/mo</option>`).join("");
+
+    function syncMonthly(){
+      const opt = planSelect.options[planSelect.selectedIndex];
+      const m = Number(opt?.getAttribute("data-monthly") || 0);
+      monthlyInput.value = m || "";
+    }
+    planSelect.addEventListener("change", syncMonthly);
+
     // ===============================
-    // AUTO-GENERATE SUBSCRIBER ID
+    // Auto-generate Subscriber ID
     // ===============================
     async function loadNextSubscriberId(){
-  try {
-    if (!API_URL) return;
-    
-    const API_URL = "https://script.google.com/macros/s/AKfycbyX-2aiopFR0EIcjLhW9Q2OQ-3BJ-zwSJshRgTcOrC_E1WbA0yxOTt2jzs5o67u6DBOLQ/exec";
-    const adminKey = "SMARTLINKX_ISP_04082025"; // SAME as Apps Script
-
-    const res = await fetch(
-      `${API_URL}?action=nextid&key=${encodeURIComponent(adminKey)}`
-    );
-
-        const json = await res.json();
+      try {
+        const res = await fetch(`${GAS_API_URL}?action=nextid&key=${encodeURIComponent(ADMIN_KEY)}`);
+        const json = await res.json().catch(() => ({}));
 
         if (json.ok && json.nextId) {
           idInput.value = json.nextId;
         } else {
-          setStatus(statusBox, "Failed to generate Subscriber ID.", "bad");
+          setStatus(statusBox, "Failed to generate Subscriber ID (check Admin Key / deployment).", "bad");
         }
       } catch (err) {
-        setStatus(statusBox, "Error loading Subscriber ID.", "bad");
+        console.error(err);
+        setStatus(statusBox, "Error loading Subscriber ID (check internet / URL).", "bad");
       }
     }
 
     // Load ID on page open
     loadNextSubscriberId();
+
+    // ===============================
+    // Submit registration
+    // ===============================
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+
+      // Basic client-side validation
+      if (!idInput.value) {
+        setStatus(statusBox, "Subscriber ID not generated yet. Refresh the page.", "bad");
+        return;
+      }
+      if (!planSelect.value) {
+        setStatus(statusBox, "Please select a plan.", "bad");
+        return;
+      }
+      if (!monthlyInput.value) {
+        setStatus(statusBox, "Monthly payment missing. Select a plan again.", "bad");
+        return;
+      }
+
+      const fd = new FormData(form);
+      const payload = Object.fromEntries(fd.entries());
+
+      // Add required key for Apps Script
+      payload.key = ADMIN_KEY;
+
+      // Ensure numeric values
+      payload.installationFee = Number(payload.installationFee || DEFAULT_INSTALL_FEE);
+      payload.monthlyPayment = Number(payload.monthlyPayment || 0);
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
+
+      try {
+        const res = await fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok || !json.ok) {
+          throw new Error(json.error || `Request failed (${res.status})`);
+        }
+
+        setStatus(statusBox, "Saved! Subscriber registered successfully.", "ok");
+        form.reset();
+
+        // Reset defaults
+        dateInput.value = todayISO();
+        installInput.value = DEFAULT_INSTALL_FEE;
+        planSelect.selectedIndex = 0;
+        monthlyInput.value = "";
+
+        // Generate next ID again
+        await loadNextSubscriberId();
+
+      } catch (err) {
+        setStatus(statusBox, "Failed: " + err.message, "bad");
+      } finally {
+        submitBtn.textContent = "Submit Registration";
+        submitBtn.disabled = false;
+      }
+    });
   </script>
 </body>
 </html>
