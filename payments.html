@@ -3,344 +3,166 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Payments - SMARTLINKX</title>
+  <title>New Subscriber Registration - SMARTLINKX</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="site-header">
-    <div class="container header-row">
-      <div class="brand">
-        <div class="logo">S</div>
-        <div>
-          <div class="brand-name">SMARTLINKX</div>
-          <div class="brand-tag">Payments</div>
-        </div>
-      </div>
 
-      <nav class="nav">
-        <a href="index.html">Home</a>
-        <a href="register.html">New Subscriber</a>
-        <a href="masterfile.html">Masterfile</a>
-        <a href="billing.html">Billing</a>
-        <a href="payments.html" class="active">Payments</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="section">
-    <div class="container">
-      <h1>Payments</h1>
-      <p class="muted">Record payments safely. Subscriber ID and Plan auto-fill from Masterfile.</p>
-
-      <div class="card">
-
-        <div class="grid two">
-          <div class="field">
-            <label>Admin Key</label>
-            <input type="password" id="payAdminKey" placeholder="Enter Admin Key" />
-          </div>
-          <div class="field">
-            <label>&nbsp;</label>
-            <button class="btn" id="loadSubsBtn" type="button">Load Subscribers</button>
-          </div>
-        </div>
-
-        <div class="field" style="margin-top:12px;">
-          <div class="alert" id="payStatus" style="display:none;"></div>
-        </div>
-
-        <hr style="margin:16px 0;opacity:.15;">
-
-        <form id="paymentForm" autocomplete="off">
-          <div class="grid two">
-            <div class="field">
-              <label>Date</label>
-              <input type="date" id="payDate" name="date" required />
-            </div>
-            <div class="field">
-              <label>Amount</label>
-              <input type="number" id="payAmount" name="amount" min="1" step="1" placeholder="e.g. 699" required />
-            </div>
-          </div>
-
-          <div class="field" style="margin-top:12px;">
-            <label>Subscriber Name</label>
-            <input type="text" id="payName" placeholder="Start typing name..." list="subList" required />
-            <datalist id="subList"></datalist>
-            <div class="muted small" id="subHint" style="margin-top:6px; display:none;">
-              Select an existing subscriber from the list so ID and Plan can auto-fill.
-            </div>
-          </div>
-
-          <div class="grid two" style="margin-top:12px;">
-            <div class="field">
-              <label>Subscriber ID</label>
-              <input type="text" id="paySubId" name="subscriberId" readonly />
-            </div>
-            <div class="field">
-              <label>Plan</label>
-              <input type="text" id="payPlan" name="plan" readonly />
-            </div>
-          </div>
-
-          <div class="grid two" style="margin-top:12px;">
-            <div class="field">
-              <label>Payment Type</label>
-              <select name="paymentType" id="payType" required>
-                <option value="">Select</option>
-                <option>Cash</option>
-                <option>GCash</option>
-                <option>Maya</option>
-                <option>Bank Transfer</option>
-                <option>Other</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Reference (optional)</label>
-              <input type="text" name="reference" id="payRef" placeholder="GCash/Maya Ref No. / OR No." />
-            </div>
-          </div>
-
-          <div style="margin-top:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <button class="btn primary" id="paySubmitBtn" type="submit" disabled>Save Payment</button>
-            <button class="btn" id="payClearBtn" type="button">Clear</button>
-            <div class="muted small" id="lockMsg" style="display:none;">
-              Load subscribers and select a valid name to enable Save.
-            </div>
-          </div>
-        </form>
-
+<header class="site-header">
+  <div class="container header-row">
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <div class="brand-name">SMARTLINKX</div>
+        <div class="brand-tag">New Subscriber Registration</div>
       </div>
     </div>
-  </main>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="register.html" class="active">New Subscriber</a>
+      <a href="masterfile.html">Masterfile</a>
+      <a href="billing.html">Billing</a>
+      <a href="payments.html">Payments</a>
+    </nav>
+  </div>
+</header>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div>© <span id="year"></span> SMARTLINKX</div>
+<main class="section">
+  <div class="container">
+    <h1>New Subscriber Registration</h1>
+    <p class="muted">Subscriber ID is auto-generated.</p>
+
+    <div class="card">
+      <form id="registrationForm" class="form-grid">
+
+        <div class="field">
+          <label>Date</label>
+          <input type="date" name="date" id="date" required />
+        </div>
+
+        <div class="field">
+          <label>Subscriber ID</label>
+          <input type="text" name="subscriberId" id="subscriberId" readonly />
+        </div>
+
+        <div class="field">
+          <label>Plan</label>
+          <select name="plan" id="planSelect" required>
+            <option value="">Select Plan</option>
+            <option value="20Mbps">20Mbps</option>
+            <option value="100Mbps">100Mbps</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Name</label>
+          <input type="text" name="name" required />
+        </div>
+
+        <div class="field">
+          <label>Contact No.</label>
+          <input type="text" name="contactNo" required />
+        </div>
+
+        <div class="field full">
+          <label>Address</label>
+          <input type="text" name="address" required />
+        </div>
+
+        <div class="field">
+          <label>Installation Fee</label>
+          <input type="number" name="installationFee" value="2000" required />
+        </div>
+
+        <div class="field">
+          <label>Monthly Payment</label>
+          <input type="number" name="monthlyPayment" id="monthlyPayment" required />
+        </div>
+
+        <div class="field">
+          <label>MAC Address</label>
+          <input type="text" name="macAddress" />
+        </div>
+
+        <div class="field">
+          <label>IP Address</label>
+          <input type="text" name="ipAddress" />
+        </div>
+
+        <div class="field full">
+          <button class="btn primary" type="submit">Submit Registration</button>
+        </div>
+
+        <div class="field full">
+          <div class="alert" id="statusBox" style="display:none;"></div>
+        </div>
+
+      </form>
     </div>
-  </footer>
+  </div>
+</main>
 
-  <script src="app.js?v=5"></script>
-  <script>
-    // ========= Helpers =========
-    function todayISO(){
-      const d = new Date();
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth()+1).padStart(2,"0");
-      const dd = String(d.getDate()).padStart(2,"0");
-      return `${yyyy}-${mm}-${dd}`;
-    }
-    function setStatus(el, msg, type){
-      el.style.display = "block";
-      el.className = "alert " + (type || "");
-      el.textContent = msg;
-    }
-    function clearStatus(el){
-      el.style.display = "none";
-      el.textContent = "";
-      el.className = "alert";
-    }
+<footer class="site-footer">
+  <div class="container">
+    © <span id="year"></span> SMARTLINKX
+  </div>
+</footer>
 
-    // ========= Elements =========
-    const statusBox = document.getElementById("payStatus");
-    const adminKeyEl = document.getElementById("payAdminKey");
-    const loadSubsBtn = document.getElementById("loadSubsBtn");
+<script>
+/* ================= CONFIG ================= */
+const API_URL = "PASTE_YOUR_APPS_SCRIPT_WEBAPP_URL";
+const ADMIN_KEY = "SMARTLINKX_ISP_04082025";
 
-    const form = document.getElementById("paymentForm");
-    const submitBtn = document.getElementById("paySubmitBtn");
-    const clearBtn = document.getElementById("payClearBtn");
+/* ================= INIT ================= */
+document.getElementById("year").textContent = new Date().getFullYear();
+document.getElementById("date").value = new Date().toISOString().slice(0,10);
 
-    const dateEl = document.getElementById("payDate");
-    const amountEl = document.getElementById("payAmount");
-    const nameEl = document.getElementById("payName");
-    const subIdEl = document.getElementById("paySubId");
-    const planEl = document.getElementById("payPlan");
-    const typeEl = document.getElementById("payType");
-    const refEl = document.getElementById("payRef");
-    const datalist = document.getElementById("subList");
+/* ================= PLAN PRICES ================= */
+const plans = {
+  "20Mbps": 699,
+  "100Mbps": 1299
+};
 
-    const hintEl = document.getElementById("subHint");
-    const lockMsg = document.getElementById("lockMsg");
+document.getElementById("planSelect").addEventListener("change", e=>{
+  document.getElementById("monthlyPayment").value = plans[e.target.value] || "";
+});
 
-    // ========= State =========
-    let subscribers = []; // [{subscriberId,name,plan}]
-    let selected = null;
+/* ================= AUTO SUBSCRIBER ID ================= */
+async function loadNextId(){
+  const res = await fetch(`${API_URL}?action=nextid&key=${ADMIN_KEY}`);
+  const json = await res.json();
+  if (json.ok) {
+    document.getElementById("subscriberId").value = json.nextId;
+  }
+}
+loadNextId();
 
-    dateEl.value = todayISO();
-    document.getElementById("year").textContent = new Date().getFullYear();
+/* ================= SUBMIT ================= */
+document.getElementById("registrationForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const form = e.target;
+  const data = Object.fromEntries(new FormData(form).entries());
+  data.key = ADMIN_KEY;
 
-    function setLocked(locked){
-      submitBtn.disabled = locked;
-      lockMsg.style.display = locked ? "block" : "none";
-    }
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" }
+  });
 
-    function resetSelection(){
-      selected = null;
-      subIdEl.value = "";
-      planEl.value = "";
-      setLocked(true);
-      hintEl.style.display = subscribers.length ? "block" : "none";
-    }
+  const json = await res.json();
+  const box = document.getElementById("statusBox");
+  box.style.display = "block";
+  box.textContent = json.message || json.error;
+  box.className = "alert " + (json.ok ? "ok" : "bad");
 
-    function buildDatalist(){
-      datalist.innerHTML = "";
-      subscribers.forEach(s => {
-        const opt = document.createElement("option");
-        // show name only to keep it clean
-        opt.value = s.name;
-        datalist.appendChild(opt);
-      });
-    }
+  if (json.ok) {
+    form.reset();
+    document.getElementById("date").value = new Date().toISOString().slice(0,10);
+    loadNextId();
+  }
+});
+</script>
 
-    function normalize(x){ return String(x || "").trim().toLowerCase(); }
-
-    function findByName(name){
-      const q = normalize(name);
-      return subscribers.find(s => normalize(s.name) === q) || null;
-    }
-
-    // ========= Load subscribers =========
-    loadSubsBtn.addEventListener("click", async () => {
-      clearStatus(statusBox);
-
-      const key = adminKeyEl.value.trim();
-      if (!key) {
-        setStatus(statusBox, "Please enter your Admin Key first.", "bad");
-        return;
-      }
-      if (!API_URL) {
-        setStatus(statusBox, "ERROR: API_URL missing in app.js.", "bad");
-        return;
-      }
-
-      loadSubsBtn.disabled = true;
-      loadSubsBtn.textContent = "Loading...";
-
-      try {
-        const url = `${API_URL}?action=subscribers&key=${encodeURIComponent(key)}`;
-        const res = await fetch(url);
-        const json = await res.json().catch(() => ({}));
-
-        if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
-
-        subscribers = Array.isArray(json.data) ? json.data : [];
-        buildDatalist();
-        resetSelection();
-
-        setStatus(statusBox, `Loaded ${subscribers.length} subscriber(s).`, "ok");
-      } catch (err) {
-        setStatus(statusBox, "Failed to load subscribers: " + err.message, "bad");
-        subscribers = [];
-        buildDatalist();
-        resetSelection();
-      } finally {
-        loadSubsBtn.disabled = false;
-        loadSubsBtn.textContent = "Load Subscribers";
-      }
-    });
-
-    // ========= Auto-fill on name input =========
-    nameEl.addEventListener("input", () => {
-      clearStatus(statusBox);
-
-      if (!subscribers.length) {
-        setStatus(statusBox, "Load subscribers first.", "bad");
-        setLocked(true);
-        return;
-      }
-
-      const s = findByName(nameEl.value);
-      if (s) {
-        selected = s;
-        subIdEl.value = s.subscriberId || "";
-        planEl.value = s.plan || "";
-        hintEl.style.display = "none";
-        setLocked(false);
-      } else {
-        resetSelection();
-      }
-    });
-
-    // ========= Clear form =========
-    clearBtn.addEventListener("click", () => {
-      form.reset();
-      dateEl.value = todayISO();
-      nameEl.value = "";
-      refEl.value = "";
-      resetSelection();
-      clearStatus(statusBox);
-    });
-
-    // ========= Submit payment =========
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      clearStatus(statusBox);
-
-      const key = adminKeyEl.value.trim();
-      if (!key) {
-        setStatus(statusBox, "Please enter your Admin Key.", "bad");
-        return;
-      }
-      if (!API_URL) {
-        setStatus(statusBox, "ERROR: API_URL missing in app.js.", "bad");
-        return;
-      }
-      if (!selected || !subIdEl.value || !planEl.value) {
-        setStatus(statusBox, "Please select a valid subscriber name from the list.", "bad");
-        setLocked(true);
-        return;
-      }
-
-      const amount = Number(amountEl.value || 0);
-      if (!isFinite(amount) || amount <= 0) {
-        setStatus(statusBox, "Amount must be a positive number.", "bad");
-        return;
-      }
-
-      const payload = {
-        action: "payment",
-        key: key,
-        date: dateEl.value,
-        amount: amount,
-        paymentType: typeEl.value,
-        reference: refEl.value || "",
-        subscriberId: subIdEl.value,
-        name: selected.name,
-        plan: planEl.value
-      };
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Saving...";
-
-      try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
-
-        setStatus(statusBox, "Saved! Payment recorded.", "ok");
-
-        // Keep subscriber selected, just reset payment fields
-        amountEl.value = "";
-        typeEl.value = "";
-        refEl.value = "";
-        dateEl.value = todayISO();
-
-      } catch (err) {
-        setStatus(statusBox, "Failed: " + err.message, "bad");
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Save Payment";
-      }
-    });
-
-    // initial lock
-    setLocked(true);
-    hintEl.style.display = "block";
-  </script>
 </body>
 </html>
