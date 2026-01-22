@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daily Expenses - SMARTLINKX</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-row">
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <div class="brand-name">SMARTLINKX</div>
+        <div class="brand-tag">Daily Expenses</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="register.html">New Subscriber</a>
+      <a href="masterfile.html">Masterfile</a>
+      <a href="billing.html">Billing</a>
+      <a href="payments.html">Payments</a>
+      <a href="daily-expense.html" class="active">Expenses</a>
+    </nav>
+  </div>
+</header>
+
+<main class="section">
+  <div class="container">
+    <h1>Daily Expense</h1>
+    <p class="muted">Record daily operational expenses.</p>
+
+    <div class="card">
+      <form id="expenseForm" class="form-grid">
+
+        <div class="field">
+          <label>Date</label>
+          <input type="date" name="date" id="date" required />
+        </div>
+
+        <div class="field">
+          <label>Category</label>
+          <select name="category" required>
+            <option value="">Select</option>
+            <option>Fuel</option>
+            <option>Electricity</option>
+            <option>Internet</option>
+            <option>Salary</option>
+            <option>Maintenance</option>
+            <option>Supplies</option>
+            <option>Others</option>
+          </select>
+        </div>
+
+        <div class="field full">
+          <label>Description</label>
+          <input type="text" name="description" placeholder="Expense details" required />
+        </div>
+
+        <div class="field">
+          <label>Amount (₱)</label>
+          <input type="number" name="amount" required />
+        </div>
+
+        <div class="field">
+          <label>Paid By</label>
+          <input type="text" name="paidBy" placeholder="Cash / GCash / Bank" required />
+        </div>
+
+        <div class="field full">
+          <button class="btn primary" type="submit">
+            Save Expense
+          </button>
+        </div>
+
+        <div class="field full">
+          <div class="alert" id="statusBox" style="display:none;"></div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    © <span id="year"></span> SMARTLINKX
+  </div>
+</footer>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+const ADMIN_KEY = "SMARTLINKX_ISP_04082025";
+
+document.getElementById("year").textContent = new Date().getFullYear();
+document.getElementById("date").value = new Date().toISOString().slice(0,10);
+
+function setStatus(msg, type){
+  const box = document.getElementById("statusBox");
+  box.style.display = "block";
+  box.className = "alert " + (type || "");
+  box.textContent = msg;
+}
+
+document.getElementById("expenseForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  data.key = ADMIN_KEY;
+  data.action = "expense";
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(data)
+    });
+
+    const json = await res.json();
+
+    if (!json.ok) throw new Error(json.error);
+
+    setStatus("Expense saved successfully.", "ok");
+    e.target.reset();
+    document.getElementById("date").value = new Date().toISOString().slice(0,10);
+
+  } catch (err) {
+    setStatus("Failed: " + err.message, "bad");
+  }
+});
+</script>
+
+</body>
+</html>
