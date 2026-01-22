@@ -129,10 +129,22 @@ document.getElementById("planSelect").addEventListener("change", e=>{
 
 /* ================= AUTO SUBSCRIBER ID ================= */
 async function loadNextId(){
-  const res = await fetch(`${API_URL}?action=nextid&key=${ADMIN_KEY}`);
-  const json = await res.json();
-  if (json.ok) {
-    document.getElementById("subscriberId").value = json.nextId;
+  try {
+    const res = await fetch(`${API_URL}?action=nextid&key=${encodeURIComponent(ADMIN_KEY)}`);
+    const json = await res.json().catch(()=> ({}));
+    if (json.ok && json.nextId) {
+      document.getElementById("subscriberId").value = json.nextId;
+    } else {
+      const box = document.getElementById("statusBox");
+      box.style.display = "block";
+      box.className = "alert bad";
+      box.textContent = "Failed to generate ID: " + (json.error || "Unknown");
+    }
+  } catch (err) {
+    const box = document.getElementById("statusBox");
+    box.style.display = "block";
+    box.className = "alert bad";
+    box.textContent = "ID Error: " + err.message;
   }
 }
 loadNextId();
@@ -140,29 +152,56 @@ loadNextId();
 /* ================= SUBMIT ================= */
 document.getElementById("registrationForm").addEventListener("submit", async e=>{
   e.preventDefault();
+
   const form = e.target;
+  const box = document.getElementById("statusBox");
+  box.style.display = "none";
+  box.textContent = "";
+
   const data = Object.fromEntries(new FormData(form).entries());
   data.key = ADMIN_KEY;
 
-  const res = await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify(data),
-    headers: { "Content-Type": "application/json" }
-  });
+  // Ensure numbers are numbers
+  data.installationFee = Number(data.installationFee || 0);
+  data.monthlyPayment  = Number(data.monthlyPayment || 0);
 
-  const json = await res.json();
-  const box = document.getElementById("statusBox");
-  box.style.display = "block";
-  box.textContent = json.message || json.error;
-  box.className = "alert " + (json.ok ? "ok" : "bad");
+  // Basic validations
+  if (!data.subscriberId) {
+    box.style.display = "block";
+    box.className = "alert bad";
+    box.textContent = "Subscriber ID is missing. Refresh the page.";
+    return;
+  }
+  if (!data.plan) {
+    box.style.display = "block";
+    box.className = "alert bad";
+    box.textContent = "Please select a plan.";
+    return;
+  }
 
-  if (json.ok) {
-    form.reset();
-    document.getElementById("date").value = new Date().toISOString().slice(0,10);
-    loadNextId();
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(data)
+    });
+
+    const json = await res.json().catch(()=> ({}));
+
+    box.style.display = "block";
+    box.className = "alert " + (json.ok ? "ok" : "bad");
+    box.textContent = json.message || json.error || "No response";
+
+    if (json.ok) {
+      form.reset();
+      document.getElementById("date").value = new Date().toISOString().slice(0,10);
+      document.getElementById("monthlyPayment").value = "";
+      await loadNextId();
+    }
+  } catch (err) {
+    box.style.display = "block";
+    box.className = "alert bad";
+    box.textContent = "Submit Error: " + err.message;
   }
 });
 </script>
-
-</body>
-</html>
