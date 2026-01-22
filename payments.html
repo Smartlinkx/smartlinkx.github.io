@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Payments - SMARTLINKX</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-row">
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <div class="brand-name">SMARTLINKX</div>
+        <div class="brand-tag">Payments</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="register.html">New Subscriber</a>
+      <a href="masterfile.html">Masterfile</a>
+      <a href="billing.html">Billing</a>
+      <a href="payments.html" class="active">Payments</a>
+    </nav>
+  </div>
+</header>
+
+<main class="section">
+  <div class="container">
+    <h1>Payments</h1>
+    <p class="muted">Record payments. Subscriber ID and Plan auto-fill from Subscriber Name.</p>
+
+    <div class="card">
+      <div class="grid two">
+        <div class="field">
+          <label>Admin Key</label>
+          <input type="password" id="payAdminKey" placeholder="Paste your Admin Key" />
+          <small class="muted">Same key used in Masterfile/Billing.</small>
+        </div>
+
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="btn" id="loadSubscribersBtn" type="button">Load Subscribers</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px;">
+        <div class="alert" id="payStatus" style="display:none;"></div>
+      </div>
+
+      <hr style="margin:16px 0; opacity:.2;" />
+
+      <form id="paymentForm" class="form-grid">
+
+        <div class="field">
+          <label>Date</label>
+          <input type="date" name="date" id="payDate" required />
+        </div>
+
+        <div class="field">
+          <label>Subscriber Name</label>
+          <input list="subscriberList" id="payName" name="name" placeholder="Start typing a subscriber name..." required />
+          <datalist id="subscriberList"></datalist>
+          <small class="muted">Pick from the list for auto-fill.</small>
+        </div>
+
+        <div class="field">
+          <label>Subscriber ID</label>
+          <input type="text" id="paySubscriberId" placeholder="Auto-filled" readonly />
+        </div>
+
+        <div class="field">
+          <label>Plan</label>
+          <input type="text" id="payPlan" placeholder="Auto-filled" readonly />
+        </div>
+
+        <div class="field">
+          <label>Amount (₱)</label>
+          <input type="number" name="amount" id="payAmount" min="1" step="0.01" required />
+        </div>
+
+        <div class="field">
+          <label>Payment Type</label>
+          <select name="paymentType" id="payType" required>
+            <option value="" disabled selected>Select type</option>
+            <option value="Cash">Cash</option>
+            <option value="GCash">GCash</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="PayMaya">PayMaya</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="field full">
+          <label>Reference (optional)</label>
+          <input type="text" name="reference" id="payRef" placeholder="Txn/Ref No. (optional)" />
+        </div>
+
+        <div class="field full">
+          <button class="btn primary" type="submit" id="paySubmitBtn">Save Payment</button>
+        </div>
+
+        <div class="field full">
+          <div class="alert" id="formStatus" style="display:none;"></div>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    © <span id="year"></span> SMARTLINKX
+  </div>
+</footer>
+
+<script>
+/* ===============================
+   CONFIG (matches your setup)
+=============================== */
+const API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec";
+
+/* ===============================
+   Helpers
+=============================== */
+function todayISO(){
+  return new Date().toISOString().slice(0,10);
+}
+function setStatus(el, msg, type){
+  el.style.display = "block";
+  el.className = "alert " + (type || "");
+  el.textContent = msg;
+}
+
+/* ===============================
+   Init UI
+=============================== */
+document.getElementById("year").textContent = new Date().getFullYear();
+document.getElementById("payDate").value = todayISO();
+
+const loadBtn = document.getElementById("loadSubscribersBtn");
+const adminKeyEl = document.getElementById("payAdminKey");
+const statusEl = document.getElementById("payStatus");
+
+const nameEl = document.getElementById("payName");
+const idEl = document.getElementById("paySubscriberId");
+const planEl = document.getElementById("payPlan");
+const datalistEl = document.getElementById("subscriberList");
+
+const form = document.getElementById("paymentForm");
+const formStatus = document.getElementById("formStatus");
+const submitBtn = document.getElementById("paySubmitBtn");
+
+let subscribers = []; // [{subscriberId,name,plan}]
+let nameMap = new Map(); // lowerName -> subscriber
+
+function normalizeName(s){
+  return String(s || "").trim().toLowerCase();
+}
+
+function buildDatalist(){
+  datalistEl.innerHTML = "";
+  subscribers.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.name;
+    datalistEl.appendChild(opt);
+  });
+}
+
+function fillFromName(name){
+  const key = normalizeName(name);
+  const s = nameMap.get(key);
+  if (s){
+    idEl.value = s.subscriberId || "";
+    planEl.value = s.plan || "";
+  } else {
+    idEl.value = "";
+    planEl.value = "";
+  }
+}
+
+/* ===============================
+   Load Subscribers (for autofill)
+=============================== */
+loadBtn.addEventListener("click", async () => {
+  const key = adminKeyEl.value.trim();
+  if (!key) {
+    setStatus(statusEl, "Please enter your Admin Key.", "bad");
+    return;
+  }
+
+  loadBtn.disabled = true;
+  loadBtn.textContent = "Loading...";
+
+  try {
+    const url = `${API_URL}?action=subscribers&key=${encodeURIComponent(key)}`;
+    const res = await fetch(url);
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
+
+    subscribers = Array.isArray(json.data) ? json.data : [];
+    nameMap = new Map(subscribers.map(s => [normalizeName(s.name), s]));
+
+    buildDatalist();
+    setStatus(statusEl, `Loaded ${subscribers.length} subscriber(s). You can now select a name.`, "ok");
+
+  } catch (err) {
+    setStatus(statusEl, "Failed: " + err.message, "bad");
+  } finally {
+    loadBtn.disabled = false;
+    loadBtn.textContent = "Load Subscribers";
+  }
+});
+
+/* ===============================
+   Auto-fill when name changes
+=============================== */
+nameEl.addEventListener("input", () => fillFromName(nameEl.value));
+nameEl.addEventListener("change", () => fillFromName(nameEl.value));
+
+/* ===============================
+   Submit Payment
+=============================== */
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const key = adminKeyEl.value.trim();
+  if (!key) {
+    setStatus(formStatus, "Please enter your Admin Key first.", "bad");
+    return;
+  }
+
+  // Try to auto-fill one last time
+  fillFromName(nameEl.value);
+
+  const fd = new FormData(form);
+  const payload = Object.fromEntries(fd.entries());
+
+  // Force your Apps Script payments format:
+  payload.action = "payment";
+  payload.key = key;
+
+  // (Optional) include extra info for your own tracking (won't break)
+  // Your current doPost ignores extra fields, but keeping these is useful if you later expand.
+  payload.subscriberId = idEl.value || "";
+  payload.plan = planEl.value || "";
+
+  // Validate required fields
+  if (!payload.date || !payload.name || !payload.amount || !payload.paymentType) {
+    setStatus(formStatus, "Missing required fields. Please complete the form.", "bad");
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Saving...";
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
+
+    setStatus(formStatus, "Saved! Payment recorded.", "ok");
+
+    // Reset form but keep admin key and loaded subscribers
+    form.reset();
+    document.getElementById("payDate").value = todayISO();
+    idEl.value = "";
+    planEl.value = "";
+
+  } catch (err) {
+    setStatus(formStatus, "Failed: " + err.message, "bad");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Save Payment";
+  }
+});
+</script>
+
+</body>
+</html>
