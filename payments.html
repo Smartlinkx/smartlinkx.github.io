@@ -29,11 +29,29 @@
 
   <main class="section">
     <div class="container">
-      <h1>Payment Form</h1>
-      <p class="muted">All payments submitted here will be saved to your Google Sheet tab <b>PAYMENTS</b>.</p>
+      <h1>Payments</h1>
+      <p class="muted">Record payments safely. Subscriber ID and Plan auto-fill from Masterfile.</p>
 
       <div class="card">
-        <form id="paymentForm">
+
+        <div class="grid two">
+          <div class="field">
+            <label>Admin Key</label>
+            <input type="password" id="payAdminKey" placeholder="Enter Admin Key" />
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button class="btn" id="loadSubsBtn" type="button">Load Subscribers</button>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:12px;">
+          <div class="alert" id="payStatus" style="display:none;"></div>
+        </div>
+
+        <hr style="margin:16px 0;opacity:.15;">
+
+        <form id="paymentForm" autocomplete="off">
           <div class="grid two">
             <div class="field">
               <label>Date</label>
@@ -41,56 +59,57 @@
             </div>
             <div class="field">
               <label>Amount</label>
-              <input type="number" name="amount" min="0" step="1" required />
+              <input type="number" id="payAmount" name="amount" min="1" step="1" placeholder="e.g. 699" required />
             </div>
           </div>
 
-         <div class="grid two" style="margin-top:12px;">
-  <div class="field">
-    <label>Subscriber ID</label>
-    <input type="text" name="subscriberId" placeholder="e.g. SLX-0001" required />
-  </div>
-  <div class="field">
-    <label>Name</label>
-    <input type="text" name="name" placeholder="Subscriber name" required />
-  </div>
-</div>
-
-<div class="grid two" style="margin-top:12px;">
-  <div class="field">
-    <label>Payment Type</label>
-    <select name="paymentType" required>
-      <option value="">Select</option>
-      <option>Cash</option>
-      <option>GCash</option>
-      <option>Maya</option>
-      <option>Bank Transfer</option>
-      <option>Other</option>
-    </select>
-  </div>
-  <div class="field">
-    <label>Reference (optional)</label>
-    <input type="text" name="reference" placeholder="GCash/Maya Ref No. / OR No." />
-  </div>
-</div>
-
-
           <div class="field" style="margin-top:12px;">
-            <label>Reference (optional)</label>
-            <input type="text" name="reference" placeholder="GCash/Maya Ref No. / OR No." />
+            <label>Subscriber Name</label>
+            <input type="text" id="payName" placeholder="Start typing name..." list="subList" required />
+            <datalist id="subList"></datalist>
+            <div class="muted small" id="subHint" style="margin-top:6px; display:none;">
+              Select an existing subscriber from the list so ID and Plan can auto-fill.
+            </div>
           </div>
 
-          <div class="field" style="margin-top:12px;">
-            <label>Admin Key</label>
-            <input type="password" id="payAdminKey" placeholder="Enter Admin Key" required />
+          <div class="grid two" style="margin-top:12px;">
+            <div class="field">
+              <label>Subscriber ID</label>
+              <input type="text" id="paySubId" name="subscriberId" readonly />
+            </div>
+            <div class="field">
+              <label>Plan</label>
+              <input type="text" id="payPlan" name="plan" readonly />
+            </div>
           </div>
 
-          <div class="field" style="margin-top:12px;">
-            <div class="alert" id="payStatus" style="display:none;"></div>
+          <div class="grid two" style="margin-top:12px;">
+            <div class="field">
+              <label>Payment Type</label>
+              <select name="paymentType" id="payType" required>
+                <option value="">Select</option>
+                <option>Cash</option>
+                <option>GCash</option>
+                <option>Maya</option>
+                <option>Bank Transfer</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Reference (optional)</label>
+              <input type="text" name="reference" id="payRef" placeholder="GCash/Maya Ref No. / OR No." />
+            </div>
           </div>
 
-          <button class="btn primary" id="paySubmitBtn" type="submit">Save Payment</button>
+          <div style="margin-top:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button class="btn primary" id="paySubmitBtn" type="submit" disabled>Save Payment</button>
+            <button class="btn" id="payClearBtn" type="button">Clear</button>
+            <div class="muted small" id="lockMsg" style="display:none;">
+              Load subscribers and select a valid name to enable Save.
+            </div>
+          </div>
         </form>
+
       </div>
     </div>
   </main>
@@ -101,8 +120,9 @@
     </div>
   </footer>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
   <script>
+    // ========= Helpers =========
     function todayISO(){
       const d = new Date();
       const yyyy = d.getFullYear();
@@ -115,32 +135,179 @@
       el.className = "alert " + (type || "");
       el.textContent = msg;
     }
+    function clearStatus(el){
+      el.style.display = "none";
+      el.textContent = "";
+      el.className = "alert";
+    }
+
+    // ========= Elements =========
+    const statusBox = document.getElementById("payStatus");
+    const adminKeyEl = document.getElementById("payAdminKey");
+    const loadSubsBtn = document.getElementById("loadSubsBtn");
 
     const form = document.getElementById("paymentForm");
-    const statusBox = document.getElementById("payStatus");
     const submitBtn = document.getElementById("paySubmitBtn");
-    const adminKeyEl = document.getElementById("payAdminKey");
-    document.getElementById("payDate").value = todayISO();
+    const clearBtn = document.getElementById("payClearBtn");
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    const dateEl = document.getElementById("payDate");
+    const amountEl = document.getElementById("payAmount");
+    const nameEl = document.getElementById("payName");
+    const subIdEl = document.getElementById("paySubId");
+    const planEl = document.getElementById("payPlan");
+    const typeEl = document.getElementById("payType");
+    const refEl = document.getElementById("payRef");
+    const datalist = document.getElementById("subList");
 
-      if (!API_URL) {
-        setStatus(statusBox, "ERROR: API_URL missing in app.js", "bad");
-        return;
-      }
+    const hintEl = document.getElementById("subHint");
+    const lockMsg = document.getElementById("lockMsg");
+
+    // ========= State =========
+    let subscribers = []; // [{subscriberId,name,plan}]
+    let selected = null;
+
+    dateEl.value = todayISO();
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    function setLocked(locked){
+      submitBtn.disabled = locked;
+      lockMsg.style.display = locked ? "block" : "none";
+    }
+
+    function resetSelection(){
+      selected = null;
+      subIdEl.value = "";
+      planEl.value = "";
+      setLocked(true);
+      hintEl.style.display = subscribers.length ? "block" : "none";
+    }
+
+    function buildDatalist(){
+      datalist.innerHTML = "";
+      subscribers.forEach(s => {
+        const opt = document.createElement("option");
+        // show name only to keep it clean
+        opt.value = s.name;
+        datalist.appendChild(opt);
+      });
+    }
+
+    function normalize(x){ return String(x || "").trim().toLowerCase(); }
+
+    function findByName(name){
+      const q = normalize(name);
+      return subscribers.find(s => normalize(s.name) === q) || null;
+    }
+
+    // ========= Load subscribers =========
+    loadSubsBtn.addEventListener("click", async () => {
+      clearStatus(statusBox);
 
       const key = adminKeyEl.value.trim();
       if (!key) {
-        setStatus(statusBox, "Please enter Admin Key.", "bad");
+        setStatus(statusBox, "Please enter your Admin Key first.", "bad");
+        return;
+      }
+      if (!API_URL) {
+        setStatus(statusBox, "ERROR: API_URL missing in app.js.", "bad");
         return;
       }
 
-      const fd = new FormData(form);
-      const payload = Object.fromEntries(fd.entries());
-      payload.action = "payment";
-      payload.key = key;
-      payload.amount = Number(payload.amount || 0);
+      loadSubsBtn.disabled = true;
+      loadSubsBtn.textContent = "Loading...";
+
+      try {
+        const url = `${API_URL}?action=subscribers&key=${encodeURIComponent(key)}`;
+        const res = await fetch(url);
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
+
+        subscribers = Array.isArray(json.data) ? json.data : [];
+        buildDatalist();
+        resetSelection();
+
+        setStatus(statusBox, `Loaded ${subscribers.length} subscriber(s).`, "ok");
+      } catch (err) {
+        setStatus(statusBox, "Failed to load subscribers: " + err.message, "bad");
+        subscribers = [];
+        buildDatalist();
+        resetSelection();
+      } finally {
+        loadSubsBtn.disabled = false;
+        loadSubsBtn.textContent = "Load Subscribers";
+      }
+    });
+
+    // ========= Auto-fill on name input =========
+    nameEl.addEventListener("input", () => {
+      clearStatus(statusBox);
+
+      if (!subscribers.length) {
+        setStatus(statusBox, "Load subscribers first.", "bad");
+        setLocked(true);
+        return;
+      }
+
+      const s = findByName(nameEl.value);
+      if (s) {
+        selected = s;
+        subIdEl.value = s.subscriberId || "";
+        planEl.value = s.plan || "";
+        hintEl.style.display = "none";
+        setLocked(false);
+      } else {
+        resetSelection();
+      }
+    });
+
+    // ========= Clear form =========
+    clearBtn.addEventListener("click", () => {
+      form.reset();
+      dateEl.value = todayISO();
+      nameEl.value = "";
+      refEl.value = "";
+      resetSelection();
+      clearStatus(statusBox);
+    });
+
+    // ========= Submit payment =========
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearStatus(statusBox);
+
+      const key = adminKeyEl.value.trim();
+      if (!key) {
+        setStatus(statusBox, "Please enter your Admin Key.", "bad");
+        return;
+      }
+      if (!API_URL) {
+        setStatus(statusBox, "ERROR: API_URL missing in app.js.", "bad");
+        return;
+      }
+      if (!selected || !subIdEl.value || !planEl.value) {
+        setStatus(statusBox, "Please select a valid subscriber name from the list.", "bad");
+        setLocked(true);
+        return;
+      }
+
+      const amount = Number(amountEl.value || 0);
+      if (!isFinite(amount) || amount <= 0) {
+        setStatus(statusBox, "Amount must be a positive number.", "bad");
+        return;
+      }
+
+      const payload = {
+        action: "payment",
+        key: key,
+        date: dateEl.value,
+        amount: amount,
+        paymentType: typeEl.value,
+        reference: refEl.value || "",
+        subscriberId: subIdEl.value,
+        name: selected.name,
+        plan: planEl.value
+      };
 
       submitBtn.disabled = true;
       submitBtn.textContent = "Saving...";
@@ -151,22 +318,29 @@
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
         });
+
         const json = await res.json().catch(() => ({}));
         if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
 
         setStatus(statusBox, "Saved! Payment recorded.", "ok");
-        form.reset();
-        document.getElementById("payDate").value = todayISO();
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Save Payment";
+
+        // Keep subscriber selected, just reset payment fields
+        amountEl.value = "";
+        typeEl.value = "";
+        refEl.value = "";
+        dateEl.value = todayISO();
+
       } catch (err) {
         setStatus(statusBox, "Failed: " + err.message, "bad");
+      } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = "Save Payment";
       }
     });
 
-    document.getElementById("year").textContent = new Date().getFullYear();
+    // initial lock
+    setLocked(true);
+    hintEl.style.display = "block";
   </script>
 </body>
 </html>
