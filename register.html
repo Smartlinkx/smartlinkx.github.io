@@ -120,7 +120,8 @@
     // ===============================
     // CONFIG (set these once)
     // ===============================
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec?action=nextid&key=SMARTLINKX_ISP_04082025";
+ <script>
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec";
   const ADMIN_KEY = "SMARTLINKX_ISP_04082025";
 
   function todayISO(){
@@ -143,7 +144,7 @@
   async function loadNextSubscriberId(){
     try {
       const url = `${GAS_API_URL}?action=nextid&key=${encodeURIComponent(ADMIN_KEY)}`;
-      console.log("NEXTID URL:", url);
+      console.log("Calling:", url);
 
       const res = await fetch(url);
       const json = await res.json();
@@ -155,12 +156,13 @@
       }
     } catch (e) {
       console.error(e);
-      setStatus(statusBox, "Error connecting to server", "bad");
+      setStatus(statusBox, "Connection error", "bad");
     }
   }
 
   loadNextSubscriberId();
 </script>
+
 
 
     // Plans (must match your backend expectations)
