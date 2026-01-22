@@ -114,58 +114,19 @@
     </div>
   </footer>
 
+  <!-- IMPORTANT:
+       Keep app.js if your other pages use it.
+       This register.html is self-contained and does NOT depend on variables inside app.js. -->
   <script src="app.js"></script>
 
   <script>
     // ===============================
-    // CONFIG (set these once)
+    // CONFIG (EDIT ONLY THESE 2)
     // ===============================
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec";
-  const ADMIN_KEY = "SMARTLINKX_ISP_04082025";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec";
+    const ADMIN_KEY  = "SMARTLINKX_ISP_04082025";
 
-  function todayISO() {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  function setStatus(el, msg, type) {
-    el.style.display = "block";
-    el.className = "alert " + (type || "");
-    el.textContent = msg;
-  }
-
-  const dateInput = document.getElementById("date");
-  const idInput = document.getElementById("subscriberId");
-  const statusBox = document.getElementById("statusBox");
-
-  dateInput.value = todayISO();
-  document.getElementById("year").textContent = new Date().getFullYear();
-
-  async function loadNextSubscriberId() {
-    try {
-      const url = `${GAS_API_URL}?action=nextid&key=${encodeURIComponent(ADMIN_KEY)}`;
-      console.log("NEXTID URL:", url);
-
-      const res = await fetch(url);
-      const json = await res.json();
-
-      if (json.ok && json.nextId) {
-        idInput.value = json.nextId;
-      } else {
-        setStatus(statusBox, "Failed to generate Subscriber ID", "bad");
-      }
-    } catch (err) {
-      console.error(err);
-      setStatus(statusBox, "Connection error", "bad");
-    }
-  }
-
-  // AUTO-RUN ON PAGE LOAD
-  loadNextSubscriberId();
-</script>
-
-
-
-    // Plans (must match your backend expectations)
+    // Plans
     const PLANS = [
       { name: "20Mbps", monthly: 699 },
       { name: "100Mbps", monthly: 1299 }
@@ -190,62 +151,61 @@
     }
 
     // ===============================
-    // Init UI
+    // DOM
     // ===============================
-    const form = document.getElementById("registrationForm");
-    const dateInput = document.getElementById("date");
-    const idInput = document.getElementById("subscriberId");
-    const planSelect = document.getElementById("planSelect");
-    const installInput = document.getElementById("installationFee");
-    const monthlyInput = document.getElementById("monthlyPayment");
-    const statusBox = document.getElementById("statusBox");
-    const submitBtn = document.getElementById("submitBtn");
+    const form        = document.getElementById("registrationForm");
+    const dateInput   = document.getElementById("date");
+    const idInput     = document.getElementById("subscriberId");
+    const planSelect  = document.getElementById("planSelect");
+    const installInput= document.getElementById("installationFee");
+    const monthlyInput= document.getElementById("monthlyPayment");
+    const statusBox   = document.getElementById("statusBox");
+    const submitBtn   = document.getElementById("submitBtn");
+    const yearEl      = document.getElementById("year");
 
+    // ===============================
+    // Init defaults
+    // ===============================
     dateInput.value = todayISO();
     installInput.value = DEFAULT_INSTALL_FEE;
-
-    document.getElementById("year").textContent = new Date().getFullYear();
+    yearEl.textContent = new Date().getFullYear();
 
     // Fill plan dropdown
-    planSelect.innerHTML = `<option value="" disabled selected>Select a plan</option>` +
+    planSelect.innerHTML =
+      `<option value="" disabled selected>Select a plan</option>` +
       PLANS.map(p => `<option value="${p.name}" data-monthly="${p.monthly}">${p.name} - ₱${p.monthly}/mo</option>`).join("");
 
     function syncMonthly(){
       const opt = planSelect.options[planSelect.selectedIndex];
       const m = Number(opt?.getAttribute("data-monthly") || 0);
-      monthlyInput.value = m || "";
+      monthlyInput.value = m ? String(m) : "";
     }
     planSelect.addEventListener("change", syncMonthly);
 
     // ===============================
     // Auto-generate Subscriber ID
     // ===============================
-   async function loadNextSubscriberId(){
-  try {
-    const api = (typeof API_URL !== "undefined")
-      ? API_URL
-      : "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec";
-    
+    async function loadNextSubscriberId(){
+      try {
+        const url = `${GAS_API_URL}?action=nextid&key=${encodeURIComponent(ADMIN_KEY)}`;
+        console.log("NEXTID URL:", url);
 
-    const adminKey = "SMARTLINKX_ISP_04082025";
+        const res = await fetch(url);
+        const json = await res.json().catch(()=> ({}));
 
-    const url = `${api}?action=nextid&key=${encodeURIComponent(adminKey)}`;
-    console.log("NEXTID URL:", url);
-
-    const res = await fetch(url);
-    const json = await res.json();
-
-    if (json.ok && json.nextId) {
-      idInput.value = json.nextId;
-    } else {
-      setStatus(statusBox, "Failed to generate Subscriber ID: " + (json.error || "Unknown"), "bad");
+        if (json.ok && json.nextId) {
+          idInput.value = json.nextId;
+        } else {
+          setStatus(statusBox, "Failed to generate Subscriber ID: " + (json.error || "Unknown"), "bad");
+        }
+      } catch (err) {
+        console.error(err);
+        setStatus(statusBox, "Connection error while generating ID.", "bad");
+      }
     }
-  } catch (err) {
-    console.error(err);
-    setStatus(statusBox, "Error loading Subscriber ID.", "bad");
-  }
-}
 
+    // Run immediately on page load
+    loadNextSubscriberId();
 
     // ===============================
     // Submit registration
@@ -253,7 +213,7 @@
     form.addEventListener("submit", async (ev) => {
       ev.preventDefault();
 
-      // Basic client-side validation
+      // Validate
       if (!idInput.value) {
         setStatus(statusBox, "Subscriber ID not generated yet. Refresh the page.", "bad");
         return;
@@ -275,7 +235,7 @@
 
       // Ensure numeric values
       payload.installationFee = Number(payload.installationFee || DEFAULT_INSTALL_FEE);
-      payload.monthlyPayment = Number(payload.monthlyPayment || 0);
+      payload.monthlyPayment  = Number(payload.monthlyPayment || 0);
 
       submitBtn.disabled = true;
       submitBtn.textContent = "Submitting...";
@@ -288,12 +248,13 @@
         });
 
         const json = await res.json().catch(() => ({}));
-
         if (!res.ok || !json.ok) {
           throw new Error(json.error || `Request failed (${res.status})`);
         }
 
         setStatus(statusBox, "Saved! Subscriber registered successfully.", "ok");
+
+        // Reset form (keep ID field controlled)
         form.reset();
 
         // Reset defaults
@@ -302,14 +263,14 @@
         planSelect.selectedIndex = 0;
         monthlyInput.value = "";
 
-        // Generate next ID again
+        // Get the next ID
         await loadNextSubscriberId();
 
       } catch (err) {
         setStatus(statusBox, "Failed: " + err.message, "bad");
       } finally {
-        submitBtn.textContent = "Submit Registration";
         submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Registration";
       }
     });
   </script>
