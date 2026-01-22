@@ -3,7 +3,7 @@
 // ===============================
 
 // 1) Paste your Google Apps Script Web App URL here:
-const API_URL = "https://script.google.com/macros/s/AKfycbyX-2aiopFR0EIcjLhW9Q2OQ-3BJ-zwSJshRgTcOrC_E1WbA0yxOTt2jzs5o67u6DBOLQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec";
 const ADMIN_KEY = "SMARTLINKX_ISP_04082025";
 
 // 2) Plans (you can add more later)
