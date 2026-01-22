@@ -150,34 +150,25 @@ async function loadNextId(){
 loadNextId();
 
 /* ================= SUBMIT ================= */
-document.getElementById("registrationForm").addEventListener("submit", async e=>{
+document.getElementById("registrationForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const form = e.target;
+  const btn = document.getElementById("submitBtn");
   const box = document.getElementById("statusBox");
-  box.style.display = "none";
-  box.textContent = "";
+
+  // Show instant status
+  btn.disabled = true;
+  box.style.display = "block";
+  box.className = "alert";
+  box.textContent = "Saving subscriber… please wait.";
 
   const data = Object.fromEntries(new FormData(form).entries());
   data.key = ADMIN_KEY;
 
-  // Ensure numbers are numbers
+  // numbers
   data.installationFee = Number(data.installationFee || 0);
   data.monthlyPayment  = Number(data.monthlyPayment || 0);
-
-  // Basic validations
-  if (!data.subscriberId) {
-    box.style.display = "block";
-    box.className = "alert bad";
-    box.textContent = "Subscriber ID is missing. Refresh the page.";
-    return;
-  }
-  if (!data.plan) {
-    box.style.display = "block";
-    box.className = "alert bad";
-    box.textContent = "Please select a plan.";
-    return;
-  }
 
   try {
     const res = await fetch(API_URL, {
@@ -186,22 +177,21 @@ document.getElementById("registrationForm").addEventListener("submit", async e=>
       body: JSON.stringify(data)
     });
 
-    const json = await res.json().catch(()=> ({}));
+    const json = await res.json().catch(() => ({}));
 
-    box.style.display = "block";
     box.className = "alert " + (json.ok ? "ok" : "bad");
     box.textContent = json.message || json.error || "No response";
 
     if (json.ok) {
       form.reset();
-      document.getElementById("date").value = new Date().toISOString().slice(0,10);
+      document.getElementById("date").value = new Date().toISOString().slice(0, 10);
       document.getElementById("monthlyPayment").value = "";
       await loadNextId();
     }
   } catch (err) {
-    box.style.display = "block";
     box.className = "alert bad";
     box.textContent = "Submit Error: " + err.message;
+  } finally {
+    btn.disabled = false;
   }
 });
-</script>
