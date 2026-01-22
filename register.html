@@ -120,8 +120,48 @@
     // ===============================
     // CONFIG (set these once)
     // ===============================
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec";
-    const ADMIN_KEY = "SMARTLINKX_ISP_04082025";
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec?action=nextid&key=SMARTLINKX_ISP_04082025";
+  const ADMIN_KEY = "SMARTLINKX_ISP_04082025";
+
+  function todayISO(){
+    return new Date().toISOString().slice(0,10);
+  }
+
+  function setStatus(el, msg, type){
+    el.style.display = "block";
+    el.className = "alert " + (type || "");
+    el.textContent = msg;
+  }
+
+  const dateInput = document.getElementById("date");
+  const idInput = document.getElementById("subscriberId");
+  const statusBox = document.getElementById("statusBox");
+
+  dateInput.value = todayISO();
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  async function loadNextSubscriberId(){
+    try {
+      const url = `${GAS_API_URL}?action=nextid&key=${encodeURIComponent(ADMIN_KEY)}`;
+      console.log("NEXTID URL:", url);
+
+      const res = await fetch(url);
+      const json = await res.json();
+
+      if (json.ok && json.nextId) {
+        idInput.value = json.nextId;
+      } else {
+        setStatus(statusBox, "Failed to generate Subscriber ID", "bad");
+      }
+    } catch (e) {
+      console.error(e);
+      setStatus(statusBox, "Error connecting to server", "bad");
+    }
+  }
+
+  loadNextSubscriberId();
+</script>
+
 
     // Plans (must match your backend expectations)
     const PLANS = [
