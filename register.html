@@ -178,24 +178,31 @@
     // ===============================
     // Auto-generate Subscriber ID
     // ===============================
-    async function loadNextSubscriberId(){
-      try {
-        const res = await fetch(`${GAS_API_URL}?action=nextid&key=${encodeURIComponent(ADMIN_KEY)}`);
-        const json = await res.json().catch(() => ({}));
+   async function loadNextSubscriberId(){
+  try {
+    const api = (typeof API_URL !== "undefined")
+      ? API_URL
+      : "https://script.google.com/macros/s/AKfycbyX-2aiopFR0EIcjLhW9Q2OQ-3BJ-zwSJshRgTcOrC_E1WbA0yxOTt2jzs5o67u6DBOLQ/exec";
 
-        if (json.ok && json.nextId) {
-          idInput.value = json.nextId;
-        } else {
-          setStatus(statusBox, "Failed to generate Subscriber ID (check Admin Key / deployment).", "bad");
-        }
-      } catch (err) {
-        console.error(err);
-        setStatus(statusBox, "Error loading Subscriber ID (check internet / URL).", "bad");
-      }
+    const adminKey = "SMARTLINKX_ISP_04082025";
+
+    const url = `${api}?action=nextid&key=${encodeURIComponent(adminKey)}`;
+    console.log("NEXTID URL:", url);
+
+    const res = await fetch(url);
+    const json = await res.json();
+
+    if (json.ok && json.nextId) {
+      idInput.value = json.nextId;
+    } else {
+      setStatus(statusBox, "Failed to generate Subscriber ID: " + (json.error || "Unknown"), "bad");
     }
+  } catch (err) {
+    console.error(err);
+    setStatus(statusBox, "Error loading Subscriber ID.", "bad");
+  }
+}
 
-    // Load ID on page open
-    loadNextSubscriberId();
 
     // ===============================
     // Submit registration
