@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Accounting - SMARTLINKX</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div>
+          <div class="brand-name">SMARTLINKX</div>
+          <div class="brand-tag">Accounting Ledger</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="register.html">New Subscriber</a>
+        <a href="masterfile.html">Masterfile</a>
+        <a href="billing.html">Billing</a>
+        <a href="payments.html">Payments</a>
+        <a href="daily-expense.html">Expenses</a>
+        <a href="accounting.html" class="active">Accounting</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <h1>Accounting</h1>
+      <p class="muted">Loads ledger from ACCOUNTING tab (Revenue, Expense, Balance). Filter by month and export.</p>
+
+      <div class="card">
+        <div class="grid two">
+          <div class="field">
+            <label>Admin Key</label>
+            <input type="password" id="accKey" placeholder="Paste your Admin Key" />
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button class="btn primary" id="loadAccBtn">Load Accounting</button>
+          </div>
+        </div>
+
+        <div class="grid two" style="margin-top:12px;">
+          <div class="field">
+            <label>Month</label>
+            <select id="monthFilter">
+              <option value="ALL">All months</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Search</label>
+            <input type="text" id="accSearch" placeholder="Search description / category / reference..." />
+          </div>
+        </div>
+
+        <div class="grid two" style="margin-top:12px;">
+          <div class="field">
+            <label>&nbsp;</label>
+            <button class="btn" id="exportCsvBtn" disabled>Export CSV</button>
+          </div>
+          <div class="field">
+            <div class="alert" id="accStatus" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="grid two" style="margin-top:12px;">
+          <div class="card">
+            <h3>Revenue</h3>
+            <div style="font-size:26px;font-weight:900" id="revBox">₱0</div>
+            <p class="muted small">Total credit for selected filter</p>
+          </div>
+          <div class="card">
+            <h3>Expense</h3>
+            <div style="font-size:26px;font-weight:900" id="expBox">₱0</div>
+            <p class="muted small">Total debit for selected filter</p>
+          </div>
+        </div>
+
+        <div class="grid two" style="margin-top:12px;">
+          <div class="card">
+            <h3>Net</h3>
+            <div style="font-size:26px;font-weight:900" id="netBox">₱0</div>
+            <p class="muted small">Revenue - Expense</p>
+          </div>
+          <div class="card">
+            <h3>Ending Balance</h3>
+            <div style="font-size:26px;font-weight:900" id="balBox">₱0</div>
+            <p class="muted small">Last balance in filtered rows</p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3>Ledger</h3>
+          <p class="muted small" id="countBox">0 row(s)</p>
+
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Debit</th>
+                  <th>Credit</th>
+                  <th>Balance</th>
+                  <th>Source</th>
+                  <th>Reference</th>
+                </tr>
+              </thead>
+              <tbody id="accBody">
+                <tr><td colspan="9" class="muted">No data loaded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div>© <span id="year"></span> SMARTLINKX</div>
+    </div>
+  </footer>
+
+  <script src="app.js?v=1"></script>
+  <script>
+    // ===============================
+    // CONFIG
+    // ===============================
+    // Uses API_URL from app.js (your Apps Script /exec URL)
+
+    const btn = document.getElementById("loadAccBtn");
+    const keyEl = document.getElementById("accKey");
+    const status = document.getElementById("accStatus");
+    const body = document.getElementById("accBody");
+
+    const monthFilter = document.getElementById("monthFilter");
+    const searchEl = document.getElementById("accSearch");
+    const exportBtn = document.getElementById("exportCsvBtn");
+
+    const revBox = document.getElementById("revBox");
+    const expBox = document.getElementById("expBox");
+    const netBox = document.getElementById("netBox");
+    const balBox = document.getElementById("balBox");
+    const countBox = document.getElementById("countBox");
+
+    let allRows = [];
+
+    function peso(n){
+      const x = Number(n);
+      return isFinite(x) ? ("₱" + x.toLocaleString("en-PH")) : "₱0";
+    }
+
+    function setStatus(msg, type){
+      status.style.display = "block";
+      status.className = "alert " + (type || "");
+      status.textContent = msg;
+    }
+
+    function monthKeyFromDate(v){
+      // v might be Date or string "yyyy-mm-dd"
+      if (!v) return "";
+      if (Object.prototype.toString.call(v) === "[object Date]" && !isNaN(v)){
+        const y = v.getFullYear();
+        const m = String(v.getMonth()+1).padStart(2,"0");
+        return `${y}-${m}`;
+      }
+      const s = String(v).trim();
+      // if "yyyy-mm-dd" => yyyy-mm
+      const m = s.match(/^(\d{4})-(\d{2})-/);
+      if (m) return `${m[1]}-${m[2]}`;
+      // try Date parse
+      const d = new Date(s);
+      if (!isNaN(d)){
+        const y = d.getFullYear();
+        const mo = String(d.getMonth()+1).padStart(2,"0");
+        return `${y}-${mo}`;
+      }
+      return "";
+    }
+
+    function normalizeText(r){
+      return [
+        r["Date"], r["Type"], r["Category"], r["Description"],
+        r["Source"], r["Reference"]
+      ].join(" ").toLowerCase();
+    }
+
+    function render(){
+      const mSel = monthFilter.value || "ALL";
+      const q = (searchEl.value || "").trim().toLowerCase();
+
+      let rows = allRows.slice();
+
+      if (mSel !== "ALL"){
+        rows = rows.filter(r => monthKeyFromDate(r["Date"]) === mSel);
+      }
+
+      if (q){
+        rows = rows.filter(r => normalizeText(r).includes(q));
+      }
+
+      // totals
+      let revenue = 0, expense = 0;
+      let endingBal = 0;
+
+      rows.forEach(r=>{
+        const debit = Number(r["Debit"] || 0) || 0;
+        const credit = Number(r["Credit"] || 0) || 0;
+        revenue += credit;
+        expense += debit;
+      });
+
+      if (rows.length){
+        const last = rows[rows.length - 1];
+        endingBal = Number(last["Balance"] || 0) || 0;
+      }
+
+      revBox.textContent = peso(revenue);
+      expBox.textContent = peso(expense);
+      netBox.textContent = peso(revenue - expense);
+      balBox.textContent = peso(endingBal);
+      countBox.textContent = `${rows.length} row(s)`;
+
+      // table
+      body.innerHTML = "";
+      if (!rows.length){
+        body.innerHTML = `<tr><td colspan="9" class="muted">No records.</td></tr>`;
+        exportBtn.disabled = true;
+        return;
+      }
+
+      rows.forEach(r=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r["Date"] ?? ""}</td>
+          <td>${r["Type"] ?? ""}</td>
+          <td>${r["Category"] ?? ""}</td>
+          <td>${r["Description"] ?? ""}</td>
+          <td>${r["Debit"] ?? ""}</td>
+          <td>${r["Credit"] ?? ""}</td>
+          <td>${r["Balance"] ?? ""}</td>
+          <td>${r["Source"] ?? ""}</td>
+          <td>${r["Reference"] ?? ""}</td>
+        `;
+        body.appendChild(tr);
+      });
+
+      exportBtn.disabled = false;
+    }
+
+    function buildMonthOptions(){
+      const set = new Set();
+      allRows.forEach(r=>{
+        const k = monthKeyFromDate(r["Date"]);
+        if (k) set.add(k);
+      });
+      const months = Array.from(set).sort();
+
+      monthFilter.innerHTML = `<option value="ALL">All months</option>` +
+        months.map(m => `<option value="${m}">${m}</option>`).join("");
+    }
+
+    function toCsv(rows){
+      const headers = ["Date","Type","Category","Description","Debit","Credit","Balance","Source","Reference"];
+      const esc = (v) => {
+        const s = String(v ?? "");
+        if (s.includes('"') || s.includes(",") || s.includes("\n")) return `"${s.replace(/"/g,'""')}"`;
+        return s;
+      };
+      const lines = [headers.join(",")];
+      rows.forEach(r=>{
+        lines.push(headers.map(h => esc(r[h])).join(","));
+      });
+      return lines.join("\n");
+    }
+
+    exportBtn.addEventListener("click", ()=>{
+      const mSel = monthFilter.value || "ALL";
+      const q = (searchEl.value || "").trim().toLowerCase();
+
+      let rows = allRows.slice();
+      if (mSel !== "ALL") rows = rows.filter(r => monthKeyFromDate(r["Date"]) === mSel);
+      if (q) rows = rows.filter(r => normalizeText(r).includes(q));
+
+      const csv = toCsv(rows);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `SMARTLINKX_ACCOUNTING_${mSel === "ALL" ? "ALL" : mSel}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+    });
+
+    searchEl.addEventListener("input", render);
+    monthFilter.addEventListener("change", render);
+
+    btn.addEventListener("click", async ()=>{
+      const api = (typeof API_URL !== "undefined") ? API_URL : "";
+      if (!api){
+        setStatus("ERROR: API_URL not found. Check app.js.", "bad");
+        return;
+      }
+
+      const key = keyEl.value.trim();
+      if (!key){
+        setStatus("Please enter your Admin Key.", "bad");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+
+      try{
+        const url = `${api}?action=accounting&key=${encodeURIComponent(key)}`;
+        const res = await fetch(url);
+        const json = await res.json().catch(()=> ({}));
+
+        if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
+
+        allRows = Array.isArray(json.rows) ? json.rows : [];
+        buildMonthOptions();
+        setStatus(`Loaded ${allRows.length} ledger row(s).`, "ok");
+        render();
+
+        btn.textContent = "Load Accounting";
+        btn.disabled = false;
+      } catch(err){
+        setStatus("Failed: " + err.message, "bad");
+        btn.textContent = "Load Accounting";
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
