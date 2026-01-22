@@ -120,15 +120,14 @@
     // ===============================
     // CONFIG (set these once)
     // ===============================
- <script>
   const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec";
   const ADMIN_KEY = "SMARTLINKX_ISP_04082025";
 
-  function todayISO(){
-    return new Date().toISOString().slice(0,10);
+  function todayISO() {
+    return new Date().toISOString().slice(0, 10);
   }
 
-  function setStatus(el, msg, type){
+  function setStatus(el, msg, type) {
     el.style.display = "block";
     el.className = "alert " + (type || "");
     el.textContent = msg;
@@ -141,10 +140,10 @@
   dateInput.value = todayISO();
   document.getElementById("year").textContent = new Date().getFullYear();
 
-  async function loadNextSubscriberId(){
+  async function loadNextSubscriberId() {
     try {
       const url = `${GAS_API_URL}?action=nextid&key=${encodeURIComponent(ADMIN_KEY)}`;
-      console.log("Calling:", url);
+      console.log("NEXTID URL:", url);
 
       const res = await fetch(url);
       const json = await res.json();
@@ -154,12 +153,13 @@
       } else {
         setStatus(statusBox, "Failed to generate Subscriber ID", "bad");
       }
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
       setStatus(statusBox, "Connection error", "bad");
     }
   }
 
+  // AUTO-RUN ON PAGE LOAD
   loadNextSubscriberId();
 </script>
 
