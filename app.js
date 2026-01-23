@@ -1,54 +1,101 @@
 /* ============================
-   SIMPLE ACCESS GATE (ONE KEY ONLY)
-   - No STAFF/ADMIN separation
-   - No nav hiding
-   - No page blocking
-============================ */
-
-/* ============================
-   SIMPLE LOGIN (ONE KEY ONLY)
+   DEDICATED LOGIN (ONE KEY ONLY)
    - NO staff/admin separation
-   - Works on all pages
+   - Redirects to login.html if not logged in
 ============================ */
 
 // ✅ Change this to your ONE access key
-const ACCESS_KEY = "SMARTLINKX_01";
+const ACCESS_KEY = "SMARTLINKX_ISP_04082025";
 
-// Use sessionStorage so it logs out when browser is closed.
-// If you want permanent login, change sessionStorage -> localStorage.
+// sessionStorage = login resets when browser closes
+// change to localStorage if you want "remember me"
 const AUTH_STORE = sessionStorage;
 
 function isLoggedIn() {
   return (AUTH_STORE.getItem("SLX_AUTH") || "") === "1";
 }
 
-function login() {
-  const key = prompt("Enter Access Key:");
-  if (!key) return false;
-
-  if (key.trim() !== ACCESS_KEY) {
-    alert("Invalid Access Key.");
-    return false;
-  }
-
+function setLoggedIn() {
   AUTH_STORE.setItem("SLX_AUTH", "1");
-  return true;
+}
+
+function clearLogin() {
+  AUTH_STORE.removeItem("SLX_AUTH");
+}
+
+function setStatus(el, msg, type) {
+  if (!el) return;
+  el.style.display = "block";
+  el.className = "alert " + (type || "");
+  el.textContent = msg;
 }
 
 function requireLogin() {
-  // Allow index.html (or login page) without forcing prompt
   const page = location.pathname.split("/").pop().toLowerCase();
-  const allowWithoutLogin = ["index.html", ""]; // "" = root
+
+  // pages allowed without login
+  const allowWithoutLogin = ["login.html", "index.html", ""];
+
   if (allowWithoutLogin.includes(page)) return;
 
   if (!isLoggedIn()) {
-    const ok = login();
-    if (!ok) {
-      // If canceled or invalid, send back to index
-      location.href = "index.html";
-    }
+    // send to login page, then return after login
+    location.href = "login.html?next=" + encodeURIComponent(page || "index.html");
   }
 }
+
+function logout() {
+  clearLogin();
+  location.href = "login.html";
+}
+
+/* ============================
+   LOGIN PAGE HANDLER
+============================ */
+(function initLoginPage() {
+  const form = document.getElementById("loginForm");
+  if (!form) return; // not on login page
+
+  // if already logged in, go next
+  if (isLoggedIn()) {
+    const next = new URLSearchParams(location.search).get("next") || "index.html";
+    location.href = next;
+    return;
+  }
+
+  const input = document.getElementById("accessKey");
+  const btn = document.getElementById("loginBtn");
+  const status = document.getElementById("loginStatus");
+
+  form.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+
+    const key = (input.value || "").trim();
+
+    if (!key) {
+      setStatus(status, "Please enter Access Key.", "bad");
+      return;
+    }
+
+    if (key !== ACCESS_KEY) {
+      setStatus(status, "Invalid Access Key.", "bad");
+      input.value = "";
+      input.focus();
+      return;
+    }
+
+    setLoggedIn();
+    setStatus(status, "Login successful. Redirecting...", "ok");
+
+    const next = new URLSearchParams(location.search).get("next") || "index.html";
+    location.href = next;
+  });
+
+  // footer year
+  const year = document.getElementById("year");
+  if (year) year.textContent = new Date().getFullYear();
+})();
+
 
 function logout() {
   AUTH_STORE.removeItem("SLX_AUTH");
