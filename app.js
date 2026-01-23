@@ -1,13 +1,15 @@
 /* ============================
    DEDICATED LOGIN (ONE KEY ONLY)
    - NO staff/admin separation
-   - Redirects to login.html if not logged in
+   - Login required before HOME
 ============================ */
 
 const ACCESS_KEY = "SMARTLINKX_01";
 const AUTH_STORE = sessionStorage;
 
-/* ---------- AUTH ---------- */
+/* ============================
+   AUTH FUNCTIONS
+============================ */
 function isLoggedIn() {
   return AUTH_STORE.getItem("SLX_AUTH") === "1";
 }
@@ -25,11 +27,14 @@ function logout() {
   location.href = "login.html";
 }
 
+/* ============================
+   LOGIN GUARD
+============================ */
 function requireLogin() {
   const page = location.pathname.split("/").pop().toLowerCase();
-  const allow = ["login.html", "home.html", ""];
+  const allowWithoutLogin = ["login.html", ""]; // index.html REQUIRES login
 
-  if (allow.includes(page)) return;
+  if (allowWithoutLogin.includes(page)) return;
 
   if (!isLoggedIn()) {
     location.href =
@@ -37,7 +42,9 @@ function requireLogin() {
   }
 }
 
-/* ---------- UI STATUS ---------- */
+/* ============================
+   UI STATUS HELPER
+============================ */
 function setStatus(el, msg, type) {
   if (!el) return;
   el.style.display = "block";
@@ -52,9 +59,10 @@ function setStatus(el, msg, type) {
   const form = document.getElementById("loginForm");
   if (!form) return;
 
+  // Already logged in → go HOME
   if (isLoggedIn()) {
     const next =
-      new URLSearchParams(location.search).get("next") || "home.html";
+      new URLSearchParams(location.search).get("next") || "index.html";
     location.href = next;
     return;
   }
@@ -66,6 +74,7 @@ function setStatus(el, msg, type) {
     e.preventDefault();
 
     const key = (input.value || "").trim();
+
     if (!key) {
       setStatus(status, "Please enter Access Key.", "bad");
       return;
@@ -82,7 +91,7 @@ function setStatus(el, msg, type) {
     setStatus(status, "Login successful. Redirecting...", "ok");
 
     const next =
-      new URLSearchParams(location.search).get("next") || "home.html";
+      new URLSearchParams(location.search).get("next") || "index.html";
     location.href = next;
   });
 
@@ -91,7 +100,7 @@ function setStatus(el, msg, type) {
 })();
 
 /* ===============================
-   SMARTLINKX Website Config
+   SMARTLINKX CONFIG
 =============================== */
 
 const API_URL =
@@ -104,19 +113,20 @@ const PLANS = [
 
 const DEFAULT_INSTALL_FEE = 2000;
 
-/* ---------- HELPERS ---------- */
+/* ===============================
+   HELPERS
+=============================== */
 function peso(n) {
   const x = Number(n);
   return isFinite(x) ? "₱" + x.toLocaleString("en-PH") : "₱0";
 }
 
 function todayISO() {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
+  return new Date().toISOString().slice(0, 10);
 }
 
 /* ===============================
-   HOME
+   HOME PAGE
 =============================== */
 (function renderHomePlans() {
   const wrap = document.getElementById("planCards");
@@ -205,7 +215,7 @@ function todayISO() {
 })();
 
 /* ===============================
-   GLOBAL GUARD
+   GLOBAL INIT
 =============================== */
 document.addEventListener("DOMContentLoaded", () => {
   requireLogin();
