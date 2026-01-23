@@ -3,123 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SMARTLINKX Internet Service Provider</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>SMARTLINKX</title>
+  <script>
+    // Redirect immediately to login
+    window.location.replace("login.html");
+  </script>
 </head>
 <body>
-  <header class="site-header">
-    <div class="container header-row">
-      <div class="brand">
-        <div class="logo">S</div>
-        <div>
-          <div class="brand-name">SMARTLINKX</div>
-          <div class="brand-tag">Fast • Reliable • Affordable</div>
-        </div>
-      </div>
-
-    <nav class="nav">
-  <a href="index.html">Home</a>
-  <a href="register.html">New Subscriber</a>
-  <a href="billing.html">Billing</a>
-  <a href="masterfile.html">Masterfile</a>
-  <a href="payments.html">Payments</a>
-  <a href="daily-expense.html">Expenses</a>
-  <a href="accounting.html">Accounting</a>
-
-  <button class="btn" onclick="logout()">Logout</button>
-</nav>
-
-         </div>
-  </header>
-
-  <main>
-    <section class="hero">
-      <div class="container hero-grid">
-        <div>
-          <h1>SMARTLINKX Internet Service Provider</h1>
-          <p class="lead">
-            Simple, fast, and stable internet for your home or business.
-          </p>
-
-          <div class="cta-row">
-            <a class="btn primary" href="register.html">Register New Subscriber</a>
-            <a class="btn" href="#plans">View Plans</a>
-          </div>
-
-          <div class="chips">
-            <span class="chip">No hidden fees</span>
-            <span class="chip">Quick installation</span>
-            <span class="chip">Customer support</span>
-          </div>
-        </div>
-
-        <div class="card hero-card">
-          <h3>Quick Info</h3>
-          <ul class="clean">
-            <li><b>Installation Fee:</b> ₱2,000</li>
-            <li><b>Billing:</b> Monthly</li>
-            <li><b>Support:</b> 24/7 (optional)</li>
-          </ul>
-          <div class="note">
-            You can add more plans anytime.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="plans" class="section">
-      <div class="container">
-        <h2>Plans</h2>
-        <p class="muted">Choose the best plan for your needs.</p>
-
-        <div class="grid two" id="planCards">
-          <!-- Filled by app.js -->
-        </div>
-
-        <div class="card info">
-          <h3>Want to add more plans later?</h3>
-          <p>
-            You can add or edit plans in <b>app.js</b> without changing the form structure.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="container">
-        <h2>Contact</h2>
-        <div class="grid two">
-          <div class="card">
-            <h3>SMARTLINKX</h3>
-            <p class="muted">Put your business address and contact details here.</p>
-            <ul class="clean">
-              <li><b>Phone:</b> +63 9xx xxx xxxx</li>
-              <li><b>Email:</b> smartlinkx@email.com</li>
-              <li><b>Service Area:</b> (Your town/barangay)</li>
-            </ul>
-          </div>
-
-          <div class="card">
-            <h3>Links</h3>
-            <div class="stack">
-              <a class="btn" href="register.html">New Subscriber Registration</a>
-              <a class="btn" href="masterfile.html">Open Masterfile (Admin)</a>
-            </div>
-            <p class="muted small">
-              Masterfile needs your admin key.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container">
-      <div>© <span id="year"></span> SMARTLINKX. All rights reserved.</div>
-    </div>
-  </footer>
-
-  <script src="app.js"></script>
 </body>
 </html>
