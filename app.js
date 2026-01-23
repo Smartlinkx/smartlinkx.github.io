@@ -312,3 +312,23 @@ document.addEventListener("DOMContentLoaded", () => {
   requireRole();
   applyNavRoles();
 });
+
+
+function applyNavRoles() {
+  const key = localStorage.getItem("SLX_KEY") || "";
+  const isAdmin = (key === "SMARTLINKX_ISP_04082025"); // ADMIN_KEY
+
+  const adminOnlyIds = [
+    "navMasterfile",
+    "navPayments",
+    "navExpenses",
+    "navAccounting"
+  ];
+
+  adminOnlyIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !isAdmin) el.style.display = "none";
+  });
+}
+
+document.addEventListener("DOMContentLoaded", applyNavRoles);
