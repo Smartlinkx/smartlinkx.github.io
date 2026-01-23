@@ -34,6 +34,13 @@ function applyNavRoles() {
   });
 }
 
+/* ============================
+   LOGOUT
+============================ */
+function logout() {
+  localStorage.removeItem("SLX_KEY");
+  location.href = "index.html";
+}
 
 
 
