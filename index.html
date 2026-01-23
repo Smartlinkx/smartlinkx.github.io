@@ -4,11 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SMARTLINKX</title>
-  <script>
-    // Redirect immediately to login
-    window.location.replace("login.html");
-  </script>
+  <meta http-equiv="refresh" content="0; url=login.html" />
+  <style>
+    body{margin:0;display:flex;align-items:center;justify-content:center;height:100vh;
+    font-family:system-ui,Arial;background:#0b1020;color:#fff}
+    .box{opacity:.85}
+  </style>
 </head>
 <body>
+  <div class="box">Redirecting to login…</div>
+  <script>
+    window.location.href = "login.html";
+  </script>
 </body>
 </html>
