@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SMARTLINKX — Login</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="container" style="max-width:520px;margin:70px auto;">
+    <div class="card">
+      <h1 style="margin:0 0 6px;">Login</h1>
+      <p class="muted" style="margin:0 0 18px;">Enter your Access Key to continue.</p>
+
+      <div id="loginStatus" class="alert" style="display:none;"></div>
+
+      <form id="loginForm">
+        <label class="muted" for="accessKey">Access Key</label>
+        <input
+          id="accessKey"
+          name="accessKey"
+          type="password"
+          placeholder="Enter Access Key"
+          autocomplete="current-password"
+          required
+          style="width:100%;"
+        />
+
+        <button id="loginBtn" class="btn primary" type="submit" style="width:100%;margin-top:12px;">
+          Login
+        </button>
+      </form>
+
+      <div style="margin-top:14px;text-align:center;">
+        <a class="muted" href="index.html">Back to Home</a>
+      </div>
+    </div>
+
+    <div class="muted" style="text-align:center;margin-top:14px;">
+      © <span id="year"></span> SMARTLINKX
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
