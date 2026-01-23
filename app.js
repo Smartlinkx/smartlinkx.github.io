@@ -33,7 +33,7 @@ function requireLogin() {
 
   if (!isLoggedIn()) {
     location.href =
-      "login.html?next=" + encodeURIComponent(page || "home.html");
+      "login.html?next=" + encodeURIComponent(page || "index.html");
   }
 }
 
