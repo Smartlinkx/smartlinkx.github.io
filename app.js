@@ -1,3 +1,42 @@
+/* ============================
+   SIMPLE ROLE GATE (UI ONLY)
+============================ */
+function requireRole() {
+  let key = localStorage.getItem("SLX_KEY");
+
+  if (!key) {
+    key = prompt("Enter Access Key:");
+    if (!key) {
+      window.location.href = "index.html";
+      return;
+    }
+    localStorage.setItem("SLX_KEY", key.trim());
+  }
+}
+
+/* ============================
+   NAV VISIBILITY (ADMIN vs STAFF)
+============================ */
+function applyNavRoles() {
+  const key = localStorage.getItem("SLX_KEY") || "";
+  const isAdmin = (key === "SMARTLINKX_ISP_04082025");
+
+  const adminOnlyIds = [
+    "navMasterfile",
+    "navPayments",
+    "navExpenses",
+    "navAccounting"
+  ];
+
+  adminOnlyIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !isAdmin) el.style.display = "none";
+  });
+}
+
+
+
+
 // ===============================
 // SMARTLINKX Website Config
 // ===============================
@@ -260,3 +299,9 @@ function setStatus(el, msg, type){
   const year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();
 })();
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  requireRole();
+  applyNavRoles();
+});
