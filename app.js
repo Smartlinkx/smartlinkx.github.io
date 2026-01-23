@@ -313,22 +313,36 @@ document.addEventListener("DOMContentLoaded", () => {
   applyNavRoles();
 });
 
-
 function applyNavRoles() {
-  const key = localStorage.getItem("SLX_KEY") || "";
+  const key = (localStorage.getItem("SLX_KEY") || "").trim();
   const isAdmin = (key === "SMARTLINKX_ISP_04082025"); // ADMIN_KEY
 
-  const adminOnlyIds = [
-    "navMasterfile",
-    "navPayments",
-    "navExpenses",
-    "navAccounting"
-  ];
-
+  const adminOnlyIds = ["navMasterfile","navPayments","navExpenses","navAccounting"];
   adminOnlyIds.forEach(id => {
     const el = document.getElementById(id);
-    if (el && !isAdmin) el.style.display = "none";
+    if (el) el.style.display = isAdmin ? "" : "none";
   });
 }
 
 document.addEventListener("DOMContentLoaded", applyNavRoles);
+
+function protectAdminPages() {
+  const key = (localStorage.getItem("SLX_KEY") || "").trim();
+  const isAdmin = (key === "SMARTLINKX_ISP_04082025"); // ADMIN_KEY
+
+  const adminPages = [
+    "masterfile.html",
+    "payments.html",
+    "daily-expense.html",
+    "accounting.html"
+  ];
+
+  const current = location.pathname.split("/").pop().toLowerCase();
+
+  if (adminPages.includes(current) && !isAdmin) {
+    alert("Staff access: not allowed.");
+    location.href = "index.html";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", protectAdminPages);
