@@ -27,13 +27,13 @@ function logout() {
 
 function requireLogin() {
   const page = location.pathname.split("/").pop().toLowerCase();
-  const allow = ["login.html", "index.html", ""];
+  const allow = ["login.html", "home.html", ""];
 
   if (allow.includes(page)) return;
 
   if (!isLoggedIn()) {
     location.href =
-      "login.html?next=" + encodeURIComponent(page || "index.html");
+      "login.html?next=" + encodeURIComponent(page || "home.html");
   }
 }
 
@@ -54,7 +54,7 @@ function setStatus(el, msg, type) {
 
   if (isLoggedIn()) {
     const next =
-      new URLSearchParams(location.search).get("next") || "index.html";
+      new URLSearchParams(location.search).get("next") || "home.html";
     location.href = next;
     return;
   }
@@ -82,7 +82,7 @@ function setStatus(el, msg, type) {
     setStatus(status, "Login successful. Redirecting...", "ok");
 
     const next =
-      new URLSearchParams(location.search).get("next") || "index.html";
+      new URLSearchParams(location.search).get("next") || "home.html";
     location.href = next;
   });
 
