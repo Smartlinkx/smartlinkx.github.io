@@ -5,6 +5,62 @@
    - No page blocking
 ============================ */
 
+/* ============================
+   SIMPLE LOGIN (ONE KEY ONLY)
+   - NO staff/admin separation
+   - Works on all pages
+============================ */
+
+// ✅ Change this to your ONE access key
+const ACCESS_KEY = "SMARTLINKX_01";
+
+// Use sessionStorage so it logs out when browser is closed.
+// If you want permanent login, change sessionStorage -> localStorage.
+const AUTH_STORE = sessionStorage;
+
+function isLoggedIn() {
+  return (AUTH_STORE.getItem("SLX_AUTH") || "") === "1";
+}
+
+function login() {
+  const key = prompt("Enter Access Key:");
+  if (!key) return false;
+
+  if (key.trim() !== ACCESS_KEY) {
+    alert("Invalid Access Key.");
+    return false;
+  }
+
+  AUTH_STORE.setItem("SLX_AUTH", "1");
+  return true;
+}
+
+function requireLogin() {
+  // Allow index.html (or login page) without forcing prompt
+  const page = location.pathname.split("/").pop().toLowerCase();
+  const allowWithoutLogin = ["index.html", ""]; // "" = root
+  if (allowWithoutLogin.includes(page)) return;
+
+  if (!isLoggedIn()) {
+    const ok = login();
+    if (!ok) {
+      // If canceled or invalid, send back to index
+      location.href = "index.html";
+    }
+  }
+}
+
+function logout() {
+  AUTH_STORE.removeItem("SLX_AUTH");
+  location.href = "index.html";
+}
+
+// ✅ Call on every page that loads app.js
+document.addEventListener("DOMContentLoaded", () => {
+  requireLogin();
+});
+
+
 function requireRole() {
   let key = (localStorage.getItem("SLX_KEY") || "").trim();
 
