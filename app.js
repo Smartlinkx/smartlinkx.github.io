@@ -32,13 +32,14 @@ function clearLogin() {
 function requireLogin() {
   const page = location.pathname.split("/").pop().toLowerCase();
 
-  // ONLY login.html is allowed without login
-  if (page === "login.html" || page === "") return;
+  // ONLY login.html is public
+  if (page === "login.html") return;
 
   if (!isLoggedIn()) {
-    location.href = "login.html";
+    location.replace("login.html");
   }
 }
+
 
 /* ============================
    LOGOUT (GLOBAL)
