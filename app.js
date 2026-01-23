@@ -1,56 +1,76 @@
-/* ===============================
-   SMARTLINKX - app.js (GLOBAL)
-   - API Config
-   - Role-based UI (STAFF vs ADMIN)
-=============================== */
+/* =====================================================
+   SMARTLINKX – GLOBAL app.js (CLEAN & FINAL)
+   Roles:
+   - STAFF  → Home, Register, Billing only
+   - ADMIN  → Full access
+===================================================== */
 
 /* ===============================
-   API CONFIG
+   CONFIG
 =============================== */
-// ✅ Your Apps Script Web App URL (NO action=... here)
 const API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec";
 
-/* ===============================
-   ROLE KEYS (UI ONLY)
-=============================== */
 const ADMIN_KEY = "SMARTLINKX_ISP_04082025";
 const STAFF_KEY = "SMARTLINKX_STAFF_2026";
 
 /* ===============================
-   LOGIN + NAV CONTROL
+   AUTH / ROLE
 =============================== */
-function requireLogin() {
-  let key = localStorage.getItem("SLX_KEY") || "";
+function getRole() {
+  const key = (localStorage.getItem("SLX_KEY") || "").trim();
+  if (key === ADMIN_KEY) return "ADMIN";
+  if (key === STAFF_KEY) return "STAFF";
+  return "";
+}
 
+function requireLogin() {
+  let key = localStorage.getItem("SLX_KEY");
   if (!key) {
     const entered = prompt("Enter Access Key:");
     if (!entered) {
       location.href = "index.html";
       return;
     }
-    key = entered.trim();
-    localStorage.setItem("SLX_KEY", key);
+    localStorage.setItem("SLX_KEY", entered.trim());
   }
-
-  applyNavRoles(key);
 }
 
-function applyNavRoles(key) {
-  const isAdmin = key === ADMIN_KEY;
+/* ===============================
+   NAV VISIBILITY
+=============================== */
+function applyNavRoles() {
+  const role = getRole();
+  const isAdmin = role === "ADMIN";
 
-  // ✅ Hide admin-only links for STAFF
-  const adminOnlyIds = ["navMasterfile", "navPayments", "navExpenses", "navAccounting"];
+  const adminOnlyIds = [
+    "navMasterfile",
+    "navPayments",
+    "navExpenses",
+    "navAccounting"
+  ];
+
   adminOnlyIds.forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.style.display = isAdmin ? "inline-block" : "none";
+    if (el) el.style.display = isAdmin ? "" : "none";
   });
+}
 
-  // ✅ Block STAFF from opening admin pages via URL
-  const adminPages = ["masterfile.html", "payments.html", "daily-expense.html", "accounting.html"];
-  const current = location.pathname.split("/").pop();
+/* ===============================
+   PAGE PROTECTION (NO POPUPS)
+=============================== */
+function protectPages() {
+  const role = getRole();
+  const page = location.pathname.split("/").pop().toLowerCase();
 
-  if (!isAdmin && adminPages.includes(current)) {
-    alert("Access denied. Admin only.");
+  const adminPages = [
+    "masterfile.html",
+    "payments.html",
+    "daily-expense.html",
+    "accounting.html"
+  ];
+
+  if (role !== "ADMIN" && adminPages.includes(page)) {
+    // silent redirect (NO alert)
     location.href = "index.html";
   }
 }
@@ -64,6 +84,30 @@ function logout() {
 }
 
 /* ===============================
-   AUTO RUN ON EVERY PAGE
+   RUN ON EVERY PAGE
 =============================== */
-document.addEventListener("DOMContentLoaded", requireLogin);
+document.addEventListener("DOMContentLoaded", () => {
+  requireLogin();
+  applyNavRoles();
+  protectPages();
+});
+
+/* ===============================
+   UTIL HELPERS (UNCHANGED)
+=============================== */
+function peso(n) {
+  const x = Number(n);
+  return isFinite(x) ? "₱" + x.toLocaleString("en-PH") : "₱0";
+}
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function setStatus(el, msg, type) {
+  if (!el) return;
+  el.style.display = "block";
+  el.className = "alert " + (type || "");
+  el.textContent = msg;
+}
