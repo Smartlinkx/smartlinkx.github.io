@@ -7,104 +7,105 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-<header class="site-header">
-  <div class="container header-row">
-    <div class="brand">
-      <div class="logo">
-        <img src="logo.png" alt="SMARTLINKX">
-      </div>
-      <div>
-        <div class="brand-name">SMARTLINKX</div>
-        <div class="brand-tag">Masterfile</div>
-      </div>
-    </div>
-
-    <nav class="nav">
-      <a href="index.html">Home</a>
-      <a href="register.html">New Subscriber</a>
-      <a href="billing.html">Billing</a>
-      <a href="masterfile.html" class="active">Masterfile</a>
-      <a href="payments.html">Payments</a>
-      <a href="daily-expense.html">Expenses</a>
-      <a href="accounting.html">Accounting</a>
-      <button class="btn" onclick="logout()">Logout</button>
-    </nav>
-  </div>
-</header>
-
-<main class="section">
-  <div class="container">
-    <h1>Masterfile</h1>
-    <p class="muted">
-      Subscriber master list loaded from Google Sheets.
-    </p>
-
-    <div class="card">
-
-      <!-- SEARCH & SORT -->
-      <div class="grid two">
-        <div class="field">
-          <label>Search</label>
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Search name / ID / plan / contact..."
-          />
-        </div>
-
-        <div class="field">
-          <label>Sort By</label>
-          <select id="sortSelect">
-            <option value="Due Date">Due Date</option>
-            <option value="Date">Registration Date</option>
-            <option value="Name">Name</option>
-            <option value="Subscriber ID">Subscriber ID</option>
-          </select>
+  <header class="site-header">
+    <div class="container header-row">
+      <div class="brand">
+        <div class="logo"><img src="logo.png" alt="SMARTLINKX"></div>
+        <div>
+          <div class="brand-name">SMARTLINKX</div>
+          <div class="brand-tag">Masterfile (Admin)</div>
         </div>
       </div>
 
-      <!-- STATUS -->
-      <div class="field" style="margin-top:12px;">
-        <div class="alert" id="mfStatus" style="display:none;"></div>
-      </div>
+      <nav class="nav">
+  <a href="index.html">Home</a>
+  <a href="register.html">New Subscriber</a>
+  <a href="billing.html">Billing</a>
+  <a href="masterfile.html">Masterfile</a>
+  <a href="payments.html">Payments</a>
+  <a href="daily-expense.html">Expenses</a>
+  <a href="accounting.html">Accounting</a>
 
-      <!-- TABLE -->
-      <div class="table-wrap" style="margin-top:12px;">
-        <table class="table" id="masterTable">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Subscriber ID</th>
-              <th>Name</th>
-              <th>Plan</th>
-              <th>Contact</th>
-              <th>Address</th>
-              <th>Install Fee</th>
-              <th>Monthly</th>
-              <th>MAC</th>
-              <th>IP</th>
-              <th>Due Date</th>
-            </tr>
-          </thead>
-          <tbody id="masterTbody">
-            <tr>
-              <td colspan="11" class="muted">Loading masterfile…</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+  <button class="btn" onclick="logout()">Logout</button>
+</nav>
+
+
 
     </div>
-  </div>
-</main>
+  </header>
 
-<footer class="site-footer">
-  <div class="container">
-    <div>© <span id="year"></span> SMARTLINKX</div>
-  </div>
-</footer>
+  <main class="section">
+    <div class="container">
+      <h1>Masterfile</h1>
+      <p class="muted">
+        Enter your Admin Key to load subscribers from Google Sheets.
+      </p>
 
-<script src="app.js"></script>
+      <div class="card">
+        <div class="grid two">
+          <div class="field">
+            <label>Admin Key</label>
+            <input type="password" id="adminKey" placeholder="Paste your Admin Key" />
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button class="btn primary" id="loadBtn">Load Masterfile</button>
+          </div>
+        </div>
+
+        <div class="grid two" style="margin-top: 12px;">
+          <div class="field">
+            <label>Search</label>
+            <input type="text" id="searchInput" placeholder="Search name / ID / plan / contact..." />
+          </div>
+          <div class="field">
+            <label>Sort By</label>
+            <select id="sortSelect">
+              <option value="Due Date">Due Date</option>
+              <option value="Date">Registration Date</option>
+              <option value="Name">Name</option>
+              <option value="Subscriber ID">Subscriber ID</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top: 12px;">
+          <div class="alert" id="mfStatus" style="display:none;"></div>
+        </div>
+
+        <div class="table-wrap" style="margin-top: 12px;">
+          <table class="table" id="masterTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Subscriber ID</th>
+                <th>Name</th>
+                <th>Plan</th>
+                <th>Contact</th>
+                <th>Address</th>
+                <th>Install Fee</th>
+                <th>Monthly</th>
+                <th>MAC</th>
+                <th>IP</th>
+                <th>Due Date</th>
+              </tr>
+            </thead>
+            <tbody id="masterTbody">
+              <tr><td colspan="11" class="muted">No data loaded yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div>© <span id="year"></span> SMARTLINKX</div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
 </body>
 </html>
