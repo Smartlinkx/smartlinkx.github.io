@@ -4,8 +4,8 @@
    - Redirects to login.html if not logged in
 ============================ */
 
-// ✅ Change this to your ONE access key
-const ACCESS_KEY = "SMARTLINKX_ISP_04082025";
+// ✅ Change this to your ONE access key (now the login password)
+const ACCESS_KEY = "SMARTLINKX_LOGIN";
 
 // sessionStorage = login resets when browser closes
 // change to localStorage if you want "remember me"
