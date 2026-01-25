@@ -49,6 +49,34 @@ function requireLogin() {
   if (!isLoggedIn()) location.replace("login.html");
 })();
 
+// Removed duplicate logout() function here (kept only the one below under "LOGOUT")
+
+function setStatus(el, msg, type) {
+  if (!el) return;
+  el.style.display = "block";
+  el.className = "alert " + (type || "");
+  el.textContent = msg;
+}
+
+function requireLogin() {
+  const page = location.pathname.split("/").pop().toLowerCase();
+
+  // ONLY login.html is allowed without login
+  if (page === "login.html") return;
+
+  if (!isLoggedIn()) {
+    // replace() prevents going back to protected page via Back button
+    location.replace("login.html");
+  }
+}
+
+// ✅ Run guard ASAP (prevents showing Home first)
+(function hardGate() {
+  const page = location.pathname.split("/").pop().toLowerCase();
+  if (page === "login.html") return;
+  if (!isLoggedIn()) location.replace("login.html");
+})();
+
 function logout() {
   // clear auth + stored key (optional)
   try { clearLogin(); } catch (e) {}
