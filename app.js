@@ -1,11 +1,14 @@
 /* ============================
    DEDICATED LOGIN (ONE KEY ONLY)
-   - NO staff/admin separation
+   - NO staff/admin separation (updated: now supports Admin/Staff roles)
    - Redirects to login.html if not logged in
 ============================ */
 
-// ✅ Change this to your ONE access key (now the login password)
-const ACCESS_KEY = "SMARTLINKX_ISP_04082025";
+// ✅ Admin access key
+const ADMIN_ACCESS_KEY = "SMARTLINKX_ISP_04082025";
+
+// ✅ Staff access key (separate from admin)
+const STAFF_ACCESS_KEY = "SMARTLINKX_STAFF_2026";
 
 // sessionStorage = login resets when browser closes
 // change to localStorage if you want "remember me"
@@ -15,41 +18,19 @@ function isLoggedIn() {
   return (AUTH_STORE.getItem("SLX_AUTH") || "") === "1";
 }
 
-function setLoggedIn() {
+function setLoggedIn(role) {
   AUTH_STORE.setItem("SLX_AUTH", "1");
+  AUTH_STORE.setItem("SLX_ROLE", role); // Store role (admin or staff)
 }
 
 function clearLogin() {
   AUTH_STORE.removeItem("SLX_AUTH");
+  AUTH_STORE.removeItem("SLX_ROLE");
 }
 
-function setStatus(el, msg, type) {
-  if (!el) return;
-  el.style.display = "block";
-  el.className = "alert " + (type || "");
-  el.textContent = msg;
+function getStoredRole() {
+  return AUTH_STORE.getItem("SLX_ROLE") || "";
 }
-
-function requireLogin() {
-  const page = location.pathname.split("/").pop().toLowerCase();
-
-  // ONLY login.html is allowed without login
-  if (page === "login.html") return;
-
-  if (!isLoggedIn()) {
-    // replace() prevents going back to protected page via Back button
-    location.replace("login.html");
-  }
-}
-
-// ✅ Run guard ASAP (prevents showing Home first)
-(function hardGate() {
-  const page = location.pathname.split("/").pop().toLowerCase();
-  if (page === "login.html") return;
-  if (!isLoggedIn()) location.replace("login.html");
-})();
-
-// Removed duplicate logout() function here (kept only the one below under "LOGOUT")
 
 function setStatus(el, msg, type) {
   if (!el) return;
@@ -81,6 +62,7 @@ function logout() {
   // clear auth + stored key (optional)
   try { clearLogin(); } catch (e) {}
   try { AUTH_STORE.removeItem("SLX_AUTH"); } catch (e) {}
+  try { AUTH_STORE.removeItem("SLX_ROLE"); } catch (e) {}
   try { localStorage.removeItem("SLX_KEY"); } catch (e) {}
 
   location.replace("login.html");
@@ -99,6 +81,7 @@ function logout() {
     return;
   }
 
+  const roleSelect = document.getElementById("roleSelect"); // New: Role dropdown
   const input = document.getElementById("accessKey");
   const btn = document.getElementById("loginBtn");
   const status = document.getElementById("loginStatus");
@@ -106,21 +89,35 @@ function logout() {
   form.addEventListener("submit", (ev) => {
     ev.preventDefault();
 
+    const selectedRole = roleSelect.value; // "admin" or "staff"
     const key = (input.value || "").trim();
+
+    if (!selectedRole) {
+      setStatus(status, "Please select a role.", "bad");
+      return;
+    }
 
     if (!key) {
       setStatus(status, "Please enter Access Key.", "bad");
       return;
     }
 
-    if (key !== ACCESS_KEY) {
-      setStatus(status, "Invalid Access Key.", "bad");
+    // Validate key based on selected role
+    let validKey = false;
+    if (selectedRole === "admin" && key === ADMIN_ACCESS_KEY) {
+      validKey = true;
+    } else if (selectedRole === "staff" && key === STAFF_ACCESS_KEY) {
+      validKey = true;
+    }
+
+    if (!validKey) {
+      setStatus(status, "Invalid Access Key for selected role.", "bad");
       input.value = "";
       input.focus();
       return;
     }
 
-    setLoggedIn();
+    setLoggedIn(selectedRole);
     setStatus(status, "Login successful. Redirecting...", "ok");
 
     location.href = "index.html";
@@ -131,32 +128,35 @@ function logout() {
   if (year) year.textContent = new Date().getFullYear();
 })();
 
-
-function logout() {
-  // clear auth + stored key (optional)
-  try { clearLogin(); } catch (e) {}
-  try { AUTH_STORE.removeItem("SLX_AUTH"); } catch (e) {}
-  try { localStorage.removeItem("SLX_KEY"); } catch (e) {}
-
-  location.replace("login.html");
-}
-
-// ✅ Call on every page that loads app.js
-document.addEventListener("DOMContentLoaded", () => {
-  requireLogin();
-});
-
-
 function requireRole() {
+  let role = getStoredRole();
   let key = (localStorage.getItem("SLX_KEY") || "").trim();
 
-  if (!key) {
-    key = prompt("Enter Access Key:");
-    if (!key) {
+  if (!role || !key) {
+    // Prompt for role and key if not set
+    const selectedRole = prompt("Select role (admin/staff):", "admin");
+    if (!selectedRole || !["admin", "staff"].includes(selectedRole.toLowerCase())) {
       window.location.href = "index.html";
       return;
     }
-    localStorage.setItem("SLX_KEY", key.trim());
+    role = selectedRole.toLowerCase();
+
+    const enteredKey = prompt("Enter Access Key:");
+    if (!enteredKey) {
+      window.location.href = "index.html";
+      return;
+    }
+    key = enteredKey.trim();
+
+    // Basic validation (optional, but helps)
+    if ((role === "admin" && key !== ADMIN_ACCESS_KEY) || (role === "staff" && key !== STAFF_ACCESS_KEY)) {
+      alert("Invalid key for role.");
+      window.location.href = "index.html";
+      return;
+    }
+
+    AUTH_STORE.setItem("SLX_ROLE", role);
+    localStorage.setItem("SLX_KEY", key);
   }
 }
 
@@ -171,6 +171,7 @@ function logout() {
   // clear auth + stored key (optional)
   try { clearLogin(); } catch (e) {}
   try { AUTH_STORE.removeItem("SLX_AUTH"); } catch (e) {}
+  try { AUTH_STORE.removeItem("SLX_ROLE"); } catch (e) {}
   try { localStorage.removeItem("SLX_KEY"); } catch (e) {}
 
   location.replace("login.html");
