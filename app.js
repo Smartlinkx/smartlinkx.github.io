@@ -5,7 +5,7 @@
 ============================ */
 
 // ✅ Change this to your ONE access key (now the login password)
-const ACCESS_KEY = "SMARTLINKX_LOGIN";
+const ACCESS_KEY = "const ADMIN_KEY = "SMARTLINKX_ISP_04082025";
 
 // sessionStorage = login resets when browser closes
 // change to localStorage if you want "remember me"
