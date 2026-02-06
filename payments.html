@@ -245,12 +245,9 @@ nameEl.addEventListener("change", () => fillFromName(nameEl.value));
 /* ===============================
    Download Receipt (Direct PDF)
 =============================== */
-receiptBtn.addEventListener("click", () => {
+receiptBtn.addEventListener("click", async () => {
   const key = adminKeyEl.value.trim();
-  if (!key) {
-    setStatus(formStatus, "Please enter your Admin Key first.", "bad");
-    return;
-  }
+  if (!key) { setStatus(formStatus, "Please enter your Admin Key first.", "bad"); return; }
 
   const subscriberId = (lastReceipt.subscriberId || idEl.value || "").trim();
   const name = (lastReceipt.name || nameEl.value || "").trim();
@@ -261,21 +258,47 @@ receiptBtn.addEventListener("click", () => {
     return;
   }
 
-  setStatus(formStatus, "Opening receipt...", "ok");
+  receiptBtn.textContent = "Generating...";
+  setStatus(formStatus, "Generating receipt... please wait.", "ok");
 
-  let url = `${API_URL}?action=receipt&key=${encodeURIComponent(key)}`;
+  try {
+    let url = `${API_URL}?action=receipt&key=${encodeURIComponent(key)}`;
+    if (subscriberId) url += `&subscriberId=${encodeURIComponent(subscriberId)}`;
+    else url += `&name=${encodeURIComponent(name)}`;
+    if (ref) url += `&ref=${encodeURIComponent(ref)}`;
 
-  if (subscriberId)
-    url += `&subscriberId=${encodeURIComponent(subscriberId)}`;
-  else
-    url += `&name=${encodeURIComponent(name)}`;
+    const res = await fetch(url);
+    const json = await res.json();
 
-  if (ref)
-    url += `&ref=${encodeURIComponent(ref)}`;
+    if (!res.ok || !json.ok) throw new Error(json.error || "Receipt failed");
 
-  // open PDF directly
-  window.open(url, "_blank");
+    // base64 -> bytes -> Blob
+    const b64 = json.b64;
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+
+    const blob = new Blob([bytes], { type: "application/pdf" });
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Force download to PC
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = json.fileName || "receipt.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(blobUrl);
+
+    setStatus(formStatus, "Receipt downloaded.", "ok");
+  } catch (err) {
+    setStatus(formStatus, "Receipt failed: " + err.message, "bad");
+  } finally {
+    receiptBtn.textContent = "Download Receipt";
+  }
 });
+
 
 /* ===============================
    Submit Payment
