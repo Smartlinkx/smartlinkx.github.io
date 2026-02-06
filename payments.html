@@ -19,16 +19,15 @@
     </div>
 
     <nav class="nav">
-  <a href="index.html">Home</a>
-  <a href="register.html">New Subscriber</a>
-  <a href="billing.html">Billing</a>
-  <a href="masterfile.html">Masterfile</a>
-  <a href="payments.html">Payments</a>
-  <a href="daily-expense.html">Expenses</a>
-  <a href="accounting.html">Accounting</a>
-
-  <button class="btn" onclick="logout()">Logout</button>
-</nav>
+      <a href="index.html">Home</a>
+      <a href="register.html">New Subscriber</a>
+      <a href="billing.html">Billing</a>
+      <a href="masterfile.html">Masterfile</a>
+      <a href="payments.html">Payments</a>
+      <a href="daily-expense.html">Expenses</a>
+      <a href="accounting.html">Accounting</a>
+      <button class="btn" onclick="logout()">Logout</button>
+    </nav>
 
   </div>
 </header>
@@ -104,8 +103,14 @@
           <input type="text" name="reference" id="payRef" placeholder="Txn/Ref No. (optional)" />
         </div>
 
-        <div class="field full">
+        <!-- BUTTONS -->
+        <div class="field full" style="display:flex; gap:10px; flex-wrap:wrap;">
           <button class="btn primary" type="submit" id="paySubmitBtn">Save Payment</button>
+
+          <!-- NEW: Download Receipt -->
+          <button class="btn" type="button" id="downloadReceiptBtn" disabled>
+            Download Receipt
+          </button>
         </div>
 
         <div class="field full">
@@ -126,7 +131,7 @@
 
 <script>
 /* ===============================
-   CONFIG (matches your setup)
+   CONFIG
 =============================== */
 const API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec";
 
@@ -155,14 +160,21 @@ const statusEl = document.getElementById("payStatus");
 const nameEl = document.getElementById("payName");
 const idEl = document.getElementById("paySubscriberId");
 const planEl = document.getElementById("payPlan");
+const refEl = document.getElementById("payRef");
 const datalistEl = document.getElementById("subscriberList");
 
 const form = document.getElementById("paymentForm");
 const formStatus = document.getElementById("formStatus");
 const submitBtn = document.getElementById("paySubmitBtn");
 
-let subscribers = []; // [{subscriberId,name,plan}]
-let nameMap = new Map(); // lowerName -> subscriber
+// NEW: receipt button
+const receiptBtn = document.getElementById("downloadReceiptBtn");
+
+// We'll store last successful customer info for receipt generation
+let lastReceipt = { subscriberId:"", name:"", ref:"" };
+
+let subscribers = [];
+let nameMap = new Map();
 
 function normalizeName(s){
   return String(s || "").trim().toLowerCase();
@@ -190,7 +202,7 @@ function fillFromName(name){
 }
 
 /* ===============================
-   Load Subscribers (for autofill)
+   Load Subscribers
 =============================== */
 loadBtn.addEventListener("click", async () => {
   const key = adminKeyEl.value.trim();
@@ -206,7 +218,6 @@ loadBtn.addEventListener("click", async () => {
     const url = `${API_URL}?action=subscribers&key=${encodeURIComponent(key)}`;
     const res = await fetch(url);
     const json = await res.json().catch(() => ({}));
-
     if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
 
     subscribers = Array.isArray(json.data) ? json.data : [];
@@ -230,6 +241,46 @@ nameEl.addEventListener("input", () => fillFromName(nameEl.value));
 nameEl.addEventListener("change", () => fillFromName(nameEl.value));
 
 /* ===============================
+   Download Receipt (NEW)
+=============================== */
+receiptBtn.addEventListener("click", async () => {
+  const key = adminKeyEl.value.trim();
+  if (!key) { setStatus(formStatus, "Please enter your Admin Key first.", "bad"); return; }
+
+  const subscriberId = (lastReceipt.subscriberId || idEl.value || "").trim();
+  const name = (lastReceipt.name || nameEl.value || "").trim();
+  const ref = (lastReceipt.ref || refEl.value || "").trim();
+
+  if (!subscriberId && !name) {
+    setStatus(formStatus, "Please select a subscriber name first.", "bad");
+    return;
+  }
+
+  receiptBtn.disabled = true;
+  receiptBtn.textContent = "Generating...";
+
+  try {
+    // Prefer subscriberId if available (more accurate)
+    let url = `${API_URL}?action=receipt&key=${encodeURIComponent(key)}`;
+    if (subscriberId) url += `&subscriberId=${encodeURIComponent(subscriberId)}`;
+    else url += `&name=${encodeURIComponent(name)}`;
+    if (ref) url += `&ref=${encodeURIComponent(ref)}`;
+
+    const res = await fetch(url);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
+
+    window.open(json.url, "_blank");
+    setStatus(formStatus, "Receipt generated. Opening PDF...", "ok");
+  } catch (err) {
+    setStatus(formStatus, "Receipt failed: " + err.message, "bad");
+  } finally {
+    receiptBtn.textContent = "Download Receipt";
+    receiptBtn.disabled = false;
+  }
+});
+
+/* ===============================
    Submit Payment
 =============================== */
 form.addEventListener("submit", async (e) => {
@@ -241,22 +292,18 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Try to auto-fill one last time
+  // Fill one last time
   fillFromName(nameEl.value);
 
   const fd = new FormData(form);
   const payload = Object.fromEntries(fd.entries());
 
-  // Force your Apps Script payments format:
   payload.action = "payment";
   payload.key = key;
 
-  // (Optional) include extra info for your own tracking (won't break)
-  // Your current doPost ignores extra fields, but keeping these is useful if you later expand.
   payload.subscriberId = idEl.value || "";
   payload.plan = planEl.value || "";
 
-  // Validate required fields
   if (!payload.date || !payload.name || !payload.amount || !payload.paymentType) {
     setStatus(formStatus, "Missing required fields. Please complete the form.", "bad");
     return;
@@ -264,6 +311,9 @@ form.addEventListener("submit", async (e) => {
 
   submitBtn.disabled = true;
   submitBtn.textContent = "Saving...";
+
+  // Disable receipt button while saving
+  receiptBtn.disabled = true;
 
   try {
     const res = await fetch(API_URL, {
@@ -275,9 +325,19 @@ form.addEventListener("submit", async (e) => {
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
 
-    setStatus(formStatus, "Saved! Payment recorded.", "ok");
+    setStatus(formStatus, "Saved! Payment recorded. You can now download the receipt.", "ok");
 
-    // Reset form but keep admin key and loaded subscribers
+    // Store receipt info from this successful save
+    lastReceipt = {
+      subscriberId: payload.subscriberId || "",
+      name: payload.name || "",
+      ref: payload.reference || ""
+    };
+
+    // Enable receipt button (user can download immediately)
+    receiptBtn.disabled = false;
+
+    // Reset form (keep key + subscribers list)
     form.reset();
     document.getElementById("payDate").value = todayISO();
     idEl.value = "";
@@ -285,6 +345,7 @@ form.addEventListener("submit", async (e) => {
 
   } catch (err) {
     setStatus(formStatus, "Failed: " + err.message, "bad");
+    receiptBtn.disabled = true;
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = "Save Payment";
