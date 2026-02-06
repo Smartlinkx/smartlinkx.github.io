@@ -26,6 +26,7 @@
       <a href="payments.html">Payments</a>
       <a href="daily-expense.html">Expenses</a>
       <a href="accounting.html">Accounting</a>
+
       <button class="btn" onclick="logout()">Logout</button>
     </nav>
 
@@ -107,8 +108,8 @@
         <div class="field full" style="display:flex; gap:10px; flex-wrap:wrap;">
           <button class="btn primary" type="submit" id="paySubmitBtn">Save Payment</button>
 
-          <!-- NEW: Download Receipt -->
-          <button class="btn" type="button" id="downloadReceiptBtn" disabled>
+          <!-- Download Receipt (ALWAYS ENABLED) -->
+          <button class="btn" type="button" id="downloadReceiptBtn">
             Download Receipt
           </button>
         </div>
@@ -131,7 +132,7 @@
 
 <script>
 /* ===============================
-   CONFIG
+   CONFIG (matches your setup)
 =============================== */
 const API_URL = "https://script.google.com/macros/s/AKfycbz-WpBesdbod91BgncMD68J7jZekbMB9aOwO7Yb_Mn2SoiOD-tLO-6rAiNl_suFKFKSkw/exec";
 
@@ -167,14 +168,14 @@ const form = document.getElementById("paymentForm");
 const formStatus = document.getElementById("formStatus");
 const submitBtn = document.getElementById("paySubmitBtn");
 
-// NEW: receipt button
+// Receipt button
 const receiptBtn = document.getElementById("downloadReceiptBtn");
 
-// We'll store last successful customer info for receipt generation
+// Last successful customer info (optional)
 let lastReceipt = { subscriberId:"", name:"", ref:"" };
 
-let subscribers = [];
-let nameMap = new Map();
+let subscribers = []; // [{subscriberId,name,plan}]
+let nameMap = new Map(); // lowerName -> subscriber
 
 function normalizeName(s){
   return String(s || "").trim().toLowerCase();
@@ -202,7 +203,7 @@ function fillFromName(name){
 }
 
 /* ===============================
-   Load Subscribers
+   Load Subscribers (for autofill)
 =============================== */
 loadBtn.addEventListener("click", async () => {
   const key = adminKeyEl.value.trim();
@@ -218,6 +219,7 @@ loadBtn.addEventListener("click", async () => {
     const url = `${API_URL}?action=subscribers&key=${encodeURIComponent(key)}`;
     const res = await fetch(url);
     const json = await res.json().catch(() => ({}));
+
     if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
 
     subscribers = Array.isArray(json.data) ? json.data : [];
@@ -241,12 +243,15 @@ nameEl.addEventListener("input", () => fillFromName(nameEl.value));
 nameEl.addEventListener("change", () => fillFromName(nameEl.value));
 
 /* ===============================
-   Download Receipt (NEW)
+   Download Receipt
+   - Uses subscriberId if available, else name
+   - Uses location.href (no popup blocker issues)
 =============================== */
 receiptBtn.addEventListener("click", async () => {
   const key = adminKeyEl.value.trim();
   if (!key) { setStatus(formStatus, "Please enter your Admin Key first.", "bad"); return; }
 
+  // Prefer last saved payment details, otherwise use current form fields
   const subscriberId = (lastReceipt.subscriberId || idEl.value || "").trim();
   const name = (lastReceipt.name || nameEl.value || "").trim();
   const ref = (lastReceipt.ref || refEl.value || "").trim();
@@ -256,27 +261,27 @@ receiptBtn.addEventListener("click", async () => {
     return;
   }
 
-  receiptBtn.disabled = true;
   receiptBtn.textContent = "Generating...";
+  setStatus(formStatus, "Generating receipt... please wait.", "ok");
 
-  try {
-    // Prefer subscriberId if available (more accurate)
+  try{
     let url = `${API_URL}?action=receipt&key=${encodeURIComponent(key)}`;
     if (subscriberId) url += `&subscriberId=${encodeURIComponent(subscriberId)}`;
     else url += `&name=${encodeURIComponent(name)}`;
     if (ref) url += `&ref=${encodeURIComponent(ref)}`;
 
     const res = await fetch(url);
-    const json = await res.json().catch(() => ({}));
+    const json = await res.json().catch(()=> ({}));
+
     if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
 
-    window.open(json.url, "_blank");
-    setStatus(formStatus, "Receipt generated. Opening PDF...", "ok");
-  } catch (err) {
+    // No popup blocker: navigate to receipt
+    location.href = json.url;
+
+  } catch(err){
     setStatus(formStatus, "Receipt failed: " + err.message, "bad");
   } finally {
     receiptBtn.textContent = "Download Receipt";
-    receiptBtn.disabled = false;
   }
 });
 
@@ -292,7 +297,6 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Fill one last time
   fillFromName(nameEl.value);
 
   const fd = new FormData(form);
@@ -301,6 +305,7 @@ form.addEventListener("submit", async (e) => {
   payload.action = "payment";
   payload.key = key;
 
+  // Extra info (won’t break Apps Script)
   payload.subscriberId = idEl.value || "";
   payload.plan = planEl.value || "";
 
@@ -312,9 +317,6 @@ form.addEventListener("submit", async (e) => {
   submitBtn.disabled = true;
   submitBtn.textContent = "Saving...";
 
-  // Disable receipt button while saving
-  receiptBtn.disabled = true;
-
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -325,19 +327,16 @@ form.addEventListener("submit", async (e) => {
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
 
-    setStatus(formStatus, "Saved! Payment recorded. You can now download the receipt.", "ok");
+    setStatus(formStatus, "Saved! Payment recorded. You may now download the receipt.", "ok");
 
-    // Store receipt info from this successful save
+    // Save for receipt download (so it still works after reset)
     lastReceipt = {
       subscriberId: payload.subscriberId || "",
       name: payload.name || "",
       ref: payload.reference || ""
     };
 
-    // Enable receipt button (user can download immediately)
-    receiptBtn.disabled = false;
-
-    // Reset form (keep key + subscribers list)
+    // Reset form but keep key + loaded subscribers
     form.reset();
     document.getElementById("payDate").value = todayISO();
     idEl.value = "";
@@ -345,7 +344,6 @@ form.addEventListener("submit", async (e) => {
 
   } catch (err) {
     setStatus(formStatus, "Failed: " + err.message, "bad");
-    receiptBtn.disabled = true;
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = "Save Payment";
