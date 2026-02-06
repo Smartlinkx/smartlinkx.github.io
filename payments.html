@@ -243,15 +243,15 @@ nameEl.addEventListener("input", () => fillFromName(nameEl.value));
 nameEl.addEventListener("change", () => fillFromName(nameEl.value));
 
 /* ===============================
-   Download Receipt
-   - Uses subscriberId if available, else name
-   - Uses location.href (no popup blocker issues)
+   Download Receipt (Direct PDF)
 =============================== */
-receiptBtn.addEventListener("click", async () => {
+receiptBtn.addEventListener("click", () => {
   const key = adminKeyEl.value.trim();
-  if (!key) { setStatus(formStatus, "Please enter your Admin Key first.", "bad"); return; }
+  if (!key) {
+    setStatus(formStatus, "Please enter your Admin Key first.", "bad");
+    return;
+  }
 
-  // Prefer last saved payment details, otherwise use current form fields
   const subscriberId = (lastReceipt.subscriberId || idEl.value || "").trim();
   const name = (lastReceipt.name || nameEl.value || "").trim();
   const ref = (lastReceipt.ref || refEl.value || "").trim();
@@ -261,28 +261,20 @@ receiptBtn.addEventListener("click", async () => {
     return;
   }
 
-  receiptBtn.textContent = "Generating...";
-  setStatus(formStatus, "Generating receipt... please wait.", "ok");
+  setStatus(formStatus, "Opening receipt...", "ok");
 
-  try{
-    let url = `${API_URL}?action=receipt&key=${encodeURIComponent(key)}`;
-    if (subscriberId) url += `&subscriberId=${encodeURIComponent(subscriberId)}`;
-    else url += `&name=${encodeURIComponent(name)}`;
-    if (ref) url += `&ref=${encodeURIComponent(ref)}`;
+  let url = `${API_URL}?action=receipt&key=${encodeURIComponent(key)}`;
 
-    const res = await fetch(url);
-    const json = await res.json().catch(()=> ({}));
+  if (subscriberId)
+    url += `&subscriberId=${encodeURIComponent(subscriberId)}`;
+  else
+    url += `&name=${encodeURIComponent(name)}`;
 
-    if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status})`);
+  if (ref)
+    url += `&ref=${encodeURIComponent(ref)}`;
 
-    // No popup blocker: navigate to receipt
-    location.href = json.url;
-
-  } catch(err){
-    setStatus(formStatus, "Receipt failed: " + err.message, "bad");
-  } finally {
-    receiptBtn.textContent = "Download Receipt";
-  }
+  // open PDF directly
+  window.open(url, "_blank");
 });
 
 /* ===============================
